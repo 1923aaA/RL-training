@@ -1,0 +1,39 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+
+#always requires a commander (in order to do anything interesting)
+#does not create any jobs
+
+#include_once  processors/ripr_agents/aiai/aiai_processor.txt
+include_once  processors/quantum_agents/aiai/ai_quantum_tasker.txt
+
+include_once  processors/quantum_agents/aiww/behavior_buddy_evade.txt
+include_once  processors/quantum_agents/aiww/behavior_buddy_engage_weapon_task_target.txt
+
+
+processor WW_LEAD_TASKER  AI_QUANTUM_TASKER
+
+   script_variables
+     #extern Array<Map<string, Object>> mWeaponArray;
+   end_script_variables
+
+   behavior_tree
+      selector
+         behavior_node  buddy_evade
+         behavior_node  go_home
+         behavior_node  pursue_weapon_task_target
+        #behavior_node  pursue-point
+         behavior_node  planned_route
+      end_selector
+      behavior_node  buddy_engage_weapon_task_target
+   end_behavior_tree
+
+end_processor
+

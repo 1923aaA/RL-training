@@ -1,0 +1,82 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: sr_sam_fcr_1.txt,v 1.1.1.1 2008/07/28 15:09:03 m210650 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#     3.  http://en.wikipedia.org/wiki/Type_345_Radar
+#
+#   Notes: Ref 3 claims range of 30 km vs fighter and 18 km vs ASM.
+#          If one assume 1 m^2 for ASM and 6 m^2 for fighter, the resultant
+#          one_m2_detect_range comes out about right for those two stated values
+#
+###############################################################################
+
+antenna_pattern SR_SAM_FCR_1_ANTENNA
+  sine_pattern
+     peak_gain  43 db                          # Ref 3
+     minimum_gain -10 db                       # unknown
+     azimuth_beamwidth  1.5 deg                # Ref 3
+     elevation_beamwidth  0.67 deg             # Ref 3
+  end_sine_pattern
+end_antenna_pattern
+
+sensor SR_SAM_FCR_1 WSF_RADAR_SENSOR
+  #show_calibration_data
+
+  maximum_request_count          1
+
+  frame_time  1.0 sec                          # unknown
+
+  one_m2_detect_range            18 km
+
+  antenna_height                 20.0 m        # unknown
+
+  minimum_range                  350 m         # Ref 3
+  maximum_range                  30 km         # Ref 3 (max tracking range)
+
+  slew_mode                      azimuth_and_elevation
+  azimuth_slew_limits            -180.0 deg 180.0 deg
+  elevation_slew_limits          -25.0 deg 85.0 deg  # Ref 3
+
+  transmitter
+     antenna_pattern             SR_SAM_FCR_1_ANTENNA
+     power                       30.0 kw       # Ref 3
+     frequency                   18000 mhz     # Ref 3 (J band)
+     pulse_width                 7.5 usec      # Ref 3
+     pulse_repetition_frequency  3600 hz       # Ref 3
+  end_transmitter
+
+  receiver
+     antenna_pattern             SR_SAM_FCR_1_ANTENNA
+     bandwidth                   133.3 khz     # use inverse of pulse width
+  end_receiver
+
+  hits_to_establish_track  3 5                 # Ref 3 claims 2.8 sec for air target
+                                               # and 1.7 sec for ASM
+  hits_to_maintain_track   1 3
+
+  track_quality            1.0    # 'weapons' grade
+
+  ignore_domain land
+  ignore_domain surface
+  ignore_domain subsurface
+  ignore_domain space
+
+  reports_range
+  reports_bearing
+  reports_elevation
+  reports_velocity
+end_sensor

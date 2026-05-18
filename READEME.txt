@@ -1,0 +1,152 @@
+# 时序杀伤网分层分布式强化学习系统
+
+## 项目简介
+
+本项目实现了基于时序网络和分层强化学习的杀伤网优化系统，包含：
+
+1. **多层网络建模**：物理层、功能层、任务层三层网络
+2. **时序杀伤链生成**：基于时间序列的动态杀伤链构建
+3. **分层决策架构**：战略层（任务参与）、战术层（链路选择）、操作层（模式选择）
+4. **内生智能节点**：节点具备自主感知、决策和能力演化能力
+5. **分布式强化学习**：基于PPO算法的多智能体协同学习
+
+## 项目结构
+
+mappo-main/
+├── onpolicy/
+│   ├── config.py                     # [总控] 既然：超参数定义 (学习率、步数、显卡设置等)
+│   │
+│   ├── scripts/                      # [启动层] 程序的入口
+│   │   ├── train/
+│   │   │   └── train_mpe.py          # 训练启动器：组装Runner与Env，开启循环
+│   │   ├── render/
+│   │   │   └── render_mpe.py         # 渲染启动器：加载模型，录制GIF
+│   │   └── train_mpe_scripts/        # 脚本库：存放 .bat/.sh 运行命令
+│   │
+│   ├── runner/                       # [调度层] 连接算法与环境的“躯干”
+│   │   ├── separated/                # (模式A) 独立策略：每个智能体独立更新
+│   │   │   ├── base_runner.py        # 负责模型保存(save)、加载(restore)
+│   │   │   └── mpe_runner.py         # 核心循环：收集数据(Collect) -> 训练(Train)
+│   │   └── shared/                   # (模式B) 共享策略：所有智能体共用网络
+│   │       ├── base_runner.py        # 共享模式基类
+│   │       └── mpe_runner.py         # 共享模式循环
+│   │
+│   ├── envs/                         # [环境层] 物理世界
+│   │   ├── env_wrappers.py           # 并行加速：SubprocVecEnv (多进程分身术)
+│   │   └── mpe/
+│   │       ├── MPE_env.py            # 适配器：将MPE包装成Gym标准接口
+│   │       ├── environment.py        # 规则层：Step逻辑、Reward计算
+│   │       ├── core.py               # 物理层：碰撞检测、运动学公式
+│   │       ├── rendering.py          # 绘图层：Pyglet绘图引擎
+│   │       ├── scenario.py           # 地图基类
+│   │       └── scenarios/            # 地图文件 (如 simple_spread.py)
+│   │
+│   ├── algorithms/                   # [算法层] 大脑与神经网络
+│   │   ├── r_mappo/
+│   │   │   ├── r_mappo.py            # 教官：计算 PPO Loss，执行梯度下降
+│   │   │   └── algorithm/
+│   │   │       ├── rMAPPOPolicy.py   # 策略管家：管理 Actor 和 Critic 两个网络
+│   │   │       └── r_actor_critic.py # 组装工：把下面的零件组装成完整网络
+│   │   └── utils/                    # [神经网络零件库] (你刚发的就在这)
+│   │       ├── act.py                # 动作头：根据分布输出动作 (Categorical/Gaussian)
+│   │       ├── distributions.py      # 概率分布：定义如何采样动作 (FixedCategorical等)
+│   │       ├── cnn.py                # 视觉眼：处理图像输入
+│   │       ├── mlp.py                # 感知层：处理向量输入 (全连接层)
+│   │       ├── rnn.py                # 记忆体：GRU/LSTM (处理时序依赖)
+│   │       ├── popart.py             # 稳定器：PopArt 归一化 (让 Critic 训练更稳)
+│   │       └── util.py               # 杂项：参数初始化、克隆网络工具
+│   │
+│   └── utils/                        # [数据设施层] 后勤保障
+│       ├── separated_buffer.py       # 独立经验池：存数据 (Obs, Act, Reward)
+│       ├── shared_buffer.py          # 共享经验池：多智能体混存数据
+│       ├── valuenorm.py              # 价值归一化：动态调整 Reward 尺度
+│       ├── multi_discrete.py         # 动作空间扩展：支持复合动作
+│       └── util.py                   # 数学工具箱
+├── environment.yaml           
+├── READEME.txt  
+├── README.md   
+├── requirements.txt 
+├── environment.yaml         
+
+1. 神经网络的“乐高积木” (algorithms/utils/)
+当代码运行到 r_actor_critic.py 想要创建一个智能体大脑时，它会像搭积木一样调用这些文件：
+感知阶段 (Input)
+	如果输入是图片 (Obs is Image) -> 调用 cnn.py (卷积层)。
+	如果输入是向量 (Obs is Vector) -> 调用 mlp.py (全连接层)。
+记忆阶段 (Memory)
+	如果开启了 RNN (use_recurrent_policy) -> 调用 rnn.py。它让智能体能记住几秒前发生的事（比如“刚才谁撞了我？”）。
+决策阶段 (Output)
+	数据流向 act.py。它负责根据网络提取的特征，计算出动作的概率分布。
+	它底层依赖 distributions.py。比如对于离散动作（上下左右），它会创建一个 FixedCategorical 分布，然后从中采样（Sample）一个动作。
+价值评估阶段 (Critic)
+	Critic 网络需要预测一个具体的分数（Value）。
+	popart.py 在这里起大作用。它可以动态调整 Value 的均值和方差，防止奖励忽大忽小导致网络不收敛。这是一个比较高级的 Trick。
+
+2. 整个系统如何“活”起来？
+让我们跟踪一次完整的 Decision Making 过程：
+眼 (Env): 看到画面 obs。
+脑 (Policy):
+	mpe_runner 把 obs 扔给 rMAPPOPolicy。
+	rMAPPOPolicy 让 r_actor_critic 开始计算。
+	mlp.py 提取特征 -> rnn.py 结合记忆 -> act.py 计算概率 -> distributions.py 采样。
+	输出：动作 (Action)。
+手 (Env): 执行动作，获得反馈。
+胃 (Buffer): 把刚才看的东西、做的动作、吃到的奖励（Reward）全都存进 separated_buffer。
+梦 (Train):
+	r_mappo.py 从 Buffer 里回放记忆。计算 Loss，告诉 mlp.py, rnn.py 里的参数该怎么调整（Backprop）。
+
+
+
+mappo-main/
+├── onpolicy/
+│   ├── config.py                     # [总控] 既然：超参数定义 (学习率、步数、显卡设置等)
+│   │
+│   ├── scripts/                      # [启动层] 程序的入口
+│   │   ├── train/
+│   │   │   └── train_kill_chain.py
+│   │   ├── render/
+│   │   │   └── render_kill_chain.py
+│   │   └── train_mpe_scripts/        # 脚本库：存放 .bat/.sh 运行命令
+│   │
+│   ├── runner/                       # [调度层] 连接算法与环境的“躯干”
+│   │   ├── separated/                # (模式A) 独立策略：每个智能体独立更新
+│   │   │   ├── base_runner.py        # 负责模型保存(save)、加载(restore)
+│   │   │   └── kill_chain_runner.py         # 核心循环：收集数据(Collect) -> 训练(Train)
+│   │   └── shared/                   # (模式B) 共享策略：所有智能体共用网络
+│   │       ├── base_runner.py        # 共享模式基类
+│   │       └── kill_chain_runner.py         # 共享模式循环
+│   │
+│   ├── envs/                         # [环境层] 物理世界
+│   │   └── kill_chain/
+│   │       ├── __init__.py
+│   │       ├── config.py
+│   │       ├── core.py
+│   │       ├── env_wrappers.py
+│   │       ├── KillChain_Env.py
+│   │
+│   ├── algorithms/                   # [算法层] 大脑与神经网络
+│   │   ├── r_mappo/
+│   │   │   ├── r_mappo.py            # 教官：计算 PPO Loss，执行梯度下降
+│   │   │   └── algorithm/
+│   │   │       ├── rMAPPOPolicy.py   # 策略管家：管理 Actor 和 Critic 两个网络
+│   │   │       └── r_actor_critic.py # 组装工：把下面的零件组装成完整网络
+│   │   └── utils/                    # [神经网络零件库] (你刚发的就在这)
+│   │       ├── act.py                # 动作头：根据分布输出动作 (Categorical/Gaussian)
+│   │       ├── distributions.py      # 概率分布：定义如何采样动作 (FixedCategorical等)
+│   │       ├── cnn.py                # 视觉眼：处理图像输入
+│   │       ├── mlp.py                # 感知层：处理向量输入 (全连接层)
+│   │       ├── rnn.py                # 记忆体：GRU/LSTM (处理时序依赖)
+│   │       ├── popart.py             # 稳定器：PopArt 归一化 (让 Critic 训练更稳)
+│   │       └── util.py               # 杂项：参数初始化、克隆网络工具
+│   │
+│   └── utils/                        # [数据设施层] 后勤保障
+│       ├── separated_buffer.py       # 独立经验池：存数据 (Obs, Act, Reward)
+│       ├── shared_buffer.py          # 共享经验池：多智能体混存数据
+│       ├── valuenorm.py              # 价值归一化：动态调整 Reward 尺度
+│       ├── multi_discrete.py         # 动作空间扩展：支持复合动作
+│       └── util.py                   # 数学工具箱
+├── environment.yaml           
+├── READEME.txt  
+├── README.md   
+├── requirements.txt 
+├── environment.yaml         

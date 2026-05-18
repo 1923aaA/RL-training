@@ -1,0 +1,155 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#
+#  File:  generic_bomber_radar.txt
+#
+#                    ***** NOTICE *****
+#
+#  This definition is not intended to be representative of the real system.
+#  Some undefined characteristics of the system have been provided so the
+#  achieved performance matches the values defined in the noted references.
+#
+# Reference:
+#   Based on A2G Radar
+#
+#  June 08:  added to file repository
+#
+#                      UNCLASSIFIED
+###############################################################################
+#
+#  SNIPPET: example of how the sensor could be included in a simulation
+#
+// include_once generic_bomber_radar.txt
+//
+// ... simulation setup & initialization commands
+//
+// radar_signature GENERIC_BOMBER_RADAR_SIGNATURE
+//    constant 1 m^2
+// end_radar_signature
+//
+//  platform_type bomber WSF_PLATFORM
+//    icon B-52_new
+//    mover WSF_AIR_MOVER end_mover
+//    radar_signature GENERIC_BOMBER_RADAR_SIGNATURE
+//
+//    sensor sensor-1 GENERIC_BOMBER_RADAR
+//      on
+//      location 0.0 0.0 -5 ft      // from center of platform (NED)
+//    end_sensor
+//  end_platform_type
+#
+###############################################################################
+
+# Basic Antenna Pattern
+antenna_pattern GENERIC_BOMBER_RADAR_ANTENNA_PATTERN
+  uniform_pattern
+    peak_gain             20 db
+    azimuth_beamwidth     360 degrees
+    elevation_beamwidth   180 degrees
+  end_uniform_pattern
+end_antenna_pattern
+
+# Air to Ground Basic Radar sensor
+sensor GENERIC_BOMBER_RADAR WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                                 # default
+  no_debug                            # default
+
+  #-- Articulated Part Commands
+  #   Slew mode and limits, yaw, pitch, & roll info goes here
+  slew_mode           azimuth_and_elevation
+
+  #-- Sensor Level Commands
+  show_calibration_data               # display radar characteristics
+
+  #-- Detection Scheduling Commands
+  # none at this time
+
+  #-- Sensor Commands
+  selection_mode            multiple  # Allow both the acquisition and tracking...
+
+  mode_template
+
+    #-- Antenna Commands
+    maximum_range           40 km     # max scope range
+
+    #-- Beam Commands
+    one_m2_detect_range     40 km
+
+    signal_processor simple_doppler
+      minimum_doppler_speed   11 m/s    # (~25 mph) ground targets
+    end_signal_processor
+
+    transmitter
+      antenna_pattern       GENERIC_BOMBER_RADAR_ANTENNA_PATTERN
+      power                 5 mw
+      frequency             3 ghz
+      pulse_repetition_frequency 250 hz
+      internal_loss         10 db
+    end_transmitter
+
+    receiver
+      antenna_pattern       GENERIC_BOMBER_RADAR_ANTENNA_PATTERN
+      bandwidth             1.6 mhz
+      detection_threshold   13 db
+      noise_power           -150 dbw
+      internal_loss         10 db
+    end_receiver
+
+    #-- Track Formation Commands
+    reports_bearing
+    reports_elevation
+    reports_frequency
+    reports_iff
+    reports_location
+    reports_velocity
+    reports_type
+  end_mode_template
+
+  # The sensor will go into ACQUIRE mode when it is turned-on.
+  initial_mode                ACQUIRE
+
+  mode ACQUIRE
+    # This mode searchs to acquire tracks.
+    scan_mode                 azimuth_and_elevation
+    frame_time                8 sec
+    hits_to_establish_track   4 4
+    track_quality             0.7
+    hits_to_maintain_track    1 8
+  end_mode
+
+  mode TRACK
+    # Allow the sensor to continue search processing while also performing tracking.
+    search_while_track
+    maximum_request_count     3
+    revisit_time              4 sec
+    track_quality             1.0
+
+    # Actual START-LOCKON-DELAY is 5 sec, but it must be adjusted to a
+    #   multiple of the revisit time. Requiring one hit will result in a
+    #   4 second delay.
+    # The same thing goes for MAX-COAST-TIME. Allowing 2 misses will
+    #   give an 8 second delay.
+    # SUPPRESSOR does essentially the same thing, but it may round up
+    #   (so maybe it should be 1 of 4???)
+
+    hits_to_establish_track    1 3
+    hits_to_maintain_track     1 3
+
+    establish_track_probability 0.600       # INITIAL-LOCK-PROB
+    maintain_track_probability  0.925       # CONTINUE-TRACK-PROB
+
+    //START-LOCKON-DELAY      5.0 sec
+    //MAX-COAST-TIME          10.0 sec
+    //POST-LOCKON-S/N-DELAY   4.0 sec
+  end_mode
+
+end_sensor

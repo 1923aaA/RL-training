@@ -1,0 +1,56 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+# This processor is a script that will launch any ssm ballistic missile.
+# The variables supplied to this processor determine the type of weapon,
+# time of launch - whether it is static or random.
+# The only required variable is the WEAPON_NAME from the platform that contains
+# this processor but it should be set already in the platform_type definition.
+
+
+processor LAUNCH_SSM_PROCESSOR WSF_SCRIPT_PROCESSOR
+   script_variables
+      string WEAPON_NAME = " ";  # this is set in the platform_type definition
+      double TIME_TO_LAUNCH = 0;  #if scenario doesn't give time, it will fire first pass
+      bool LAUNCH_RANDOM    = false;  # Default is not to fire at a random time
+      double MIN_TIME       = 10.0; # Minumum time a missile can launch
+      double MAX_TIME    = 1000.0; # Max time a missile can launch
+      int trackIndex     = 0;   # Don't change this; used internally
+   end_script_variables
+
+   on_initialize
+      // This will overide any static set launch time...
+      if (LAUNCH_RANDOM == true)
+          TIME_TO_LAUNCH = RANDOM.Uniform(MIN_TIME, MAX_TIME);
+   end_on_initialize
+
+   update_interval 10.0 sec # how often to run the on_update script
+   on_update
+      if (TIME_NOW > TIME_TO_LAUNCH)
+         {
+         WsfLocalTrackList trackList = PLATFORM.MasterTrackList();
+         WsfWeapon tbm = PLATFORM.Weapon(WEAPON_NAME);
+         if ((PLATFORM.WeaponCount() > 0) && (trackIndex < trackList.TrackCount()))
+            {
+            if (tbm.IsValid() && (tbm.QuantityRemaining() > 0))
+               {
+               tbm.CueToTarget(trackList.TrackEntry(trackIndex));
+               writeln(TIME_NOW, " Fired ", WEAPON_NAME);
+               tbm.Fire(trackList.TrackEntry(trackIndex));
+               trackIndex = trackIndex + 1;
+               }
+            }
+          else
+            {
+             writeln(TIME_NOW, " Turning ssm processor off for ", PLATFORM.Name());
+             PROCESSOR.TurnOff(); # no weapons or targets left
+            }
+         }
+   end_on_update
+end_processor

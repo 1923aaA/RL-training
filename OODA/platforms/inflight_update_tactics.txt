@@ -1,0 +1,95 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+# * * ************************************** * *
+# *   ****** Demonstration input file ******   *
+# *   ******      UNCLASSIFIED        ******   *
+# * * ************************************** * *
+
+# this file defines a task manager implementing generic
+# naval sam engagement tactics
+
+processor INFLIGHT_UPDATE_TACTICS WSF_TASK_PROCESSOR
+
+   update_interval 5.0 sec
+
+   #script_debug_writes on
+   #show_state_transitions
+   #show_task_messages
+
+   script_variables
+      double WEAPON_UPDATE_INTERVAL = 60.0;
+      string UPLINK_COMM_NAME;
+      string WEAPON_COMM_NAME;
+
+      # these variables are internal and should not be modified
+      # by user
+      string mUpdateTaskStr = "Update";
+      Map<int, WsfTrack> weaponMap = Map<int, WsfTrack>();
+      Map<int, double> updateMap = Map<int, double>();
+   end_script_variables
+
+   script void UpdateWeapon(WsfPlatform aWeapon, WsfTrack aTrack)
+      WsfTrackMessage message = WsfTrackMessage();
+      message.SetTrack(aTrack);
+      WsfComm commDevice = PLATFORM.Comm(UPLINK_COMM_NAME);
+      WsfComm weaponComm = aWeapon.Comm(WEAPON_COMM_NAME);
+      commDevice.SendMessage(message, weaponComm);
+   end_script
+
+   on_message
+      type WSF_TASK_ASSIGN_MESSAGE
+         script
+            WsfTaskAssignMessage message = (WsfTaskAssignMessage)MESSAGE;
+            writeln_d("*** Task assigned.");
+            if (message.TaskType() == mUpdateTaskStr)
+            {
+               string weaponPlatformName = message.Track().AuxDataString("weapon_platform");
+               writeln_d("*** Task Track Aux Data: ", weaponPlatformName);
+               WsfPlatform weapon = WsfSimulation.FindPlatform(weaponPlatformName);
+               int platformIndex = weapon.Index();
+               updateMap.Set(platformIndex, TIME_NOW + WEAPON_UPDATE_INTERVAL);
+
+               # parse through local track list and find track with same aux field
+               foreach (WsfTrack track in PLATFORM.MasterTrackList())
+               {
+                  if (track.AuxDataString("weapon_platform") == weaponPlatformName)
+                  {
+                     weaponMap.Set(platformIndex, track);
+                     break;
+                  }
+               }
+            }
+         end_script
+   end_on_message
+
+   on_update
+      foreach (int weaponIndex : double time in updateMap)
+      {
+         double timeToUpdate = updateMap.Get(weaponIndex);
+         WsfPlatform weapon = WsfSimulation.FindPlatform(weaponIndex);
+         # verify if weapon still exists
+         if (weapon.IsValid())
+         {
+            WsfTrack track = weaponMap.Get(weaponIndex);
+            if (track.BelievedAlive() &&
+                (TIME_NOW > time))
+            {
+               UpdateWeapon(weapon, track);
+               updateMap.Set(weaponIndex, TIME_NOW + WEAPON_UPDATE_INTERVAL);
+            }
+         }
+         else
+         {
+            updateMap.Erase(weaponIndex);
+            weaponMap.Erase(weaponIndex);
+         }
+      }
+   end_on_update
+
+end_processor

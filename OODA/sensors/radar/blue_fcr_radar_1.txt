@@ -1,0 +1,108 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#                          ------ UNCLASSIFIED ------
+#                               BLUE_FCR_RADAR_1
+#
+#      This is the threat detection, tracking and guidance radar for BLUE_SR_SAM.
+#
+# NOTE: In reality this is a multi-function radar with many modes. Everything
+#       is collapsed to a single mode.
+###############################################################################
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+# This definition is intended to be EXPORTABLE. It is defined using publicly
+# available, attributable sources. DO NOT ADD ANYTHING BASED ON OTHER SOURCES!
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+###############################################################################
+#
+# References: (PDF files contained in the subdirectory blue_fcr_radar_ref)
+#
+# 1) Jane's JREW AN/MPQ-53/-65, 014-Aug-2009
+#    a) C band (4-8 gHz
+#    b) Antenna is 2.44 m diameter, 5,161 element phased-array
+#    c) 3-170 km detection range.
+#    d) Search sector is 90 deg, track is 120 deg
+#
+# 2) http://www.globalsecurity.org/space/library/policy/army/fm/3-01-85/appb.htm
+#    a) 'Radar antenna is positioned at the forward end of the shelter and is
+#       erected to a fixed 67.5 deg angle relative to the horizontal plane'.
+#
+# 3) http://www.mobileradar.org/radar_descptn_2.html
+#    a) AN/MPQ-53 can track 50 targets and control 9 missiles.
+#       (Other sources have said it can track 100 targets)
+###############################################################################
+
+antenna_pattern BLUE_FCR_RADAR_1_ANTENNA
+   circular_pattern
+      beamwidth                        1.0 deg              # Typical for phased-array tracker
+      peak_gain                        40.0 db              # Typical for phased-array tracker
+end_antenna_pattern
+
+sensor BLUE_FCR_RADAR_1 WSF_RADAR_SENSOR
+
+   pitch                               67.5 deg             # Ref 2
+
+   frame_time                          1 sec
+
+   # This is just for culling purposes
+   maximum_range                       200 km               # Ref 1, plus a little slop
+
+   electronic_beam_steering            azimuth_and_elevation
+   electronic_beam_steering_limit      60 deg               # Ref 1, 1/2 of track sector
+   electronic_beam_steering_loss_exponent 1.4               # Typical for phased-array
+
+   scan_mode                           azimuth_and_elevation
+   azimuth_scan_limits                 -60 deg 60 deg       # Same as steering limits
+   elevation_scan_limits               -60 deg 60 deg       # Same as steering limits
+
+   transmitter
+      antenna_pattern                  BLUE_FCR_RADAR_1_ANTENNA
+      frequency                        6 ghz                # Ref 1, C band (4-8)
+
+      # Nothing was specified about the power. But something must be given so the model
+      # can compute a receiver noise power that results in a detection range of 170 km.
+      #
+      # The actual power isn't important because passive detection of the transmitter is
+      # not being considered.
+
+      power                            50 kw
+
+      # We don't know anything else about the transmitted signal (pulse width, PRF,
+      # pulse_compression), so nothing is supplied.
+
+   end_transmitter
+
+   receiver
+      antenna_pattern                  BLUE_FCR_RADAR_1_ANTENNA
+
+      # We don't know anything about the receiver (noise figure, etc.) The effective
+      # noise power is derived by the model to get the required nominal detection range.
+      #
+      # This will probably result in a ridiculously low effective noise power, but
+      # because we don't know anything about the transmitted signal modulation, we just
+      # have let it ride. It shouldn't be important because we aren't worried about jamming
+      # or passive detection.
+
+   end_receiver
+
+   detection_threshold                 12.8 db              # Nominal Swerling case 1, Pd=0.5
+   one_m2_detect_range                 170  km              # Ref 1
+
+   hits_to_establish_track             2 3
+   hits_to_maintain_track              1 3
+   reports_range
+   reports_bearing
+   reports_elevation
+   reports_velocity
+   reports_iff
+end_sensor

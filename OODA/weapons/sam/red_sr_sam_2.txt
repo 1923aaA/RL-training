@@ -1,0 +1,103 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: red_sr_sam_2.txt,v 1.2 2010/12/07 13:39:52 m191713 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#
+#   Using data for RED_SR_NAVAL_SAM_1 and RED_SR_NAVAL_SAM_2
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#     3.  http://china-pla.blogspot.com/2007_10_01_archive.html
+#
+#
+###############################################################################
+
+aero RED_SR_SAM_2_AERO WSF_AERO
+  # Values estimated from Hoerner's Drag book
+   cd_zero_subsonic    0.30
+   cd_zero_supersonic  0.50
+   mach_begin_cd_rise  0.95
+   mach_end_cd_rise    1.3
+   supersonic_cd_slope -0.15     # required to reach max range
+   mach_max_supersonic 4.0       # Ref 2
+   reference_area      0.126 m2  # Ref 2 400mm body dia
+   cl_max              7.5
+end_aero
+
+platform_type RED_SR_SAM_2 WSF_PLATFORM
+  icon SA-11_Missile
+
+  # Ref 2 lists max speed as 1.23 km/s; assume 15% longer burn time then RED_SR_NAVAL_SAM_1
+  # Tuned stage 1 and stage 2 against 30kft target
+  mover WSF_GUIDED_MOVER
+    stage 1
+       empty_mass        0.01 kg
+       fuel_mass         265 kg
+       thrust_duration   2.9 sec       # assuming 25% of total burn time
+       specific_impulse  250 sec       # typical solid propellant
+       aero              RED_SR_SAM_2_AERO
+    end_stage
+
+    stage 2
+       total_mass        455 kg        # Ref 2 lists total missile mass of 720 kg
+       fuel_mass         80 kg
+       thrust_duration   9.8 sec
+       specific_impulse  250 sec
+       aero              RED_SR_SAM_2_AERO
+    end_stage
+  end_mover
+
+  comm uplink WSF_COMM_TRANSCEIVER
+     internal_link data_mgr
+  end_comm
+
+  processor data_mgr WSF_WEAPON_TRACK_PROCESSOR
+  end_processor
+
+  processor seeker WSF_PERFECT_TRACKER
+     update_interval 1.0 sec
+     internal_link data_mgr
+  end_processor
+
+  processor computer WSF_GUIDANCE_COMPUTER
+    guide_to_truth                true
+    proportional_navigation_gain  2.0
+    velocity_pursuit_gain         1.0
+    g_bias                        1.0
+    maximum_commanded_g           23.0 g       # Ref 1
+    update_interval               0.1 s
+  end_processor
+
+  processor fuse WSF_AIR_TARGET_FUSE
+    max_time_of_flight_to_detonate  60.0 sec            # Ref 2 - max range of 40 km
+  end_processor
+end_platform_type
+
+weapon_effects RED_SR_SAM_2_EFFECT WSF_GRADUATED_LETHALITY      # unknown
+   radius_and_pk 17.0 m 0.8         # Ref 1 lethal radius for RED_SR_NAVAL_SAM_1
+end_weapon_effects
+
+weapon RED_SR_SAM_2 WSF_EXPLICIT_WEAPON
+   launched_platform_type RED_SR_SAM_2
+   weapon_effects RED_SR_SAM_2_EFFECT
+
+   quantity 32
+   firing_delay           1.0 sec   # unknown
+   salvo_interval         2.0 sec   # Ref 3
+   firing_interval        2.0 sec   # Ref 3
+
+   slew_mode              both
+   azimuth_slew_limits    -180.0 deg 180.0 deg
+   elevation_slew_limits  20 deg 89 deg
+end_weapon

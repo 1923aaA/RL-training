@@ -1,0 +1,40 @@
+# Python cache/artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.egg-info/
+build/
+dist/
+
+# Environments and tooling caches
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE/editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Experiment outputs and local runtime files
+results/
+logs/
+*.log
+*.db
+wandb/
+gifs/
+win_rate/
+api/
+RODE/
+OODA/output/
+onpolicy/scripts/render/captures/
+*.csv
+.nfs*

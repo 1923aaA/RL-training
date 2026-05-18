@@ -1,0 +1,56 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: front_dome.txt,v 1.1.1.1 2008/07/28 15:09:03 m210650 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#     3.  http://china-pla.blogspot.com/2007_10_01_archive.html
+#     4.  http://www.kyes.com/antenna/navy/basics/antennas.htm
+#
+###############################################################################
+
+antenna_pattern FRONT_DOME_ANTENNA
+  sine_pattern
+     peak_gain            39.8 db          # Ref 4 assuming 1.5 m diameter dish
+     minimum_gain         -10 db           # unknown
+     azimuth_beamwidth    1.8 deg          # Ref 4 est using 1.5 m diameter dish
+     elevation_beamwidth  1.8 deg
+  end_sine_pattern
+end_antenna_pattern
+
+sensor FRONT_DOME WSF_RADAR_SENSOR
+  #show_calibration_data
+
+  maximum_request_count          1
+
+  frame_time                     1.0 sec       # unknown
+
+  antenna_height                 20.0 m        # unknown
+
+  slew_mode                      azimuth_and_elevation
+  azimuth_slew_limits            -180.0 deg 180.0 deg
+  elevation_slew_limits          0.0 deg 70.0 deg  # Ref 2
+
+  transmit_only
+
+  transmitter
+     antenna_pattern             FRONT_DOME_ANTENNA
+     power                       4.0 kw        # Ref 3
+     frequency                   7000 mhz      # Ref 3 (C band)
+  end_transmitter
+
+  # false but it must report something to initialize
+  reports_range
+end_sensor

@@ -1,0 +1,8 @@
+platform_type SHIP_1 WSF_PLATFORM
+   side red 
+   icon Carrier
+   radar_signature SHIP_RADAR_SIGNATURE
+
+   mover WSF_SURFACE_MOVER 
+   end_mover
+end_platform_type

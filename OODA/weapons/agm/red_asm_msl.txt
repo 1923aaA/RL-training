@@ -1,0 +1,89 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: red_asm_msl.txt,v 1.1.1.1 2008/07/28 15:09:03 m210650 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#                             Anti-ship missile
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#     3.  http://en.wikipedia.org/wiki/C-802
+#     4.  http://en.wikipedia.org/wiki/P-15_Termit
+#
+###############################################################################
+
+include_once weapons/agm/asm_tactics.txt
+include_once sensors/radar/red_missile_seeker_1.txt
+
+platform_type RED_ASM_MSL WSF_PLATFORM
+  icon HARPOON
+  radar_signature VEHICLE_RADAR_SIGNATURE
+  mover WSF_AIR_MOVER
+    #show_status
+    default_dive_rate            27 m/s   # assume 5 degree dive
+    default_radial_acceleration  2.0 g    # assume 2 g
+    maximum_speed                306 m/s  # Ref 2 M0.9 @ sea level
+  end_mover
+
+  comm uplink WSF_COMM_TRANSCEIVER
+     internal_link data_mgr
+  end_comm
+
+  processor data_mgr WSF_TRACK_PROCESSOR
+     purge_interval   400 sec
+  end_processor
+
+  processor task_mgr ASM_TACTICS
+     on_initialize
+        CRUISE_ALT          = 25;     # Ref 2
+        SENSOR_NAME         = "seeker";
+        SENSOR_TRACK_MODE   = "default";
+        SEEKER_ACTIVATION   = 11000;  # Ref 4 (using SS-N-2 Styx as surrogate)
+        TERMINAL_ALT        = 6;      # Ref 2
+     end_on_initialize
+  end_processor
+
+  sensor seeker RED_MISSILE_SEEKER_1    # using as surrogate
+    off
+    ignore_same_side
+    processor data_mgr
+  end_sensor
+
+  processor fuse WSF_GROUND_TARGET_FUSE
+    max_time_of_flight_to_detonate  392.0 sec            # 120 km @ M0.9
+  end_processor
+end_platform_type
+
+weapon_effects RED_ASM_MSL_EFFECT WSF_GRADUATED_LETHALITY      # unknown
+   radius_and_pk 20.0 m 0.75
+end_weapon_effects
+
+weapon RED_ASM_MSL WSF_EXPLICIT_WEAPON
+  launched_platform_type RED_ASM_MSL
+  weapon_effects RED_ASM_MSL_EFFECT
+
+  # due to complexities of modeling direction missile is released from platform,
+  # point missile at target and rely on host platform to determine if with
+  # angular LAR
+  script void on_create(WsfPlatform aWeapon, WsfTrack aTrack)
+     WsfRoute flight = aWeapon.CreateRoute("ASM_DUMMY");
+     flight.Transform(aWeapon.Latitude(), aWeapon.Longitude(), aTrack.Bearing());
+     aWeapon.FollowRoute(flight);
+  end_script
+
+  quantity 8
+
+  slew_mode           azimuth
+  azimuth_slew_limits -90.0 deg 90.0 deg
+  pitch               15 deg   # Ref 2
+end_weapon

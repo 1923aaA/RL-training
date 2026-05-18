@@ -1,0 +1,89 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: red_sr_sam_1.txt,v 1.2 2010/12/07 13:39:52 m191713 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#
+#
+###############################################################################
+
+aero RED_SR_SAM_1_AERO WSF_AERO
+  # Values estimated from Hoerner's Drag book
+   cd_zero_subsonic    0.30
+   cd_zero_supersonic  0.50
+   mach_begin_cd_rise  0.95
+   mach_end_cd_rise    1.3
+   mach_max_supersonic 2.3       # Ref 2
+   reference_area      0.017 m2  # Ref 2 150mm body dia
+   cl_max              3.5
+end_aero
+
+platform_type RED_SR_SAM_1 WSF_PLATFORM
+  icon SA-8_Missile
+
+  mover WSF_GUIDED_MOVER
+    #show_status
+    total_mass       84.5 kg     # Ref 2
+    fuel_mass        25.45 kg    # Ref 2
+    thrust           5200 lbf    # tuned for max speed
+    thrust_duration  2.5 sec     # Ref 2 lists M2.3 in 2.5 sec
+    update_interval  0.10 s
+    aero             RED_SR_SAM_1_AERO
+  end_mover
+
+  comm uplink WSF_COMM_TRANSCEIVER
+     internal_link data_mgr
+  end_comm
+
+  processor data_mgr WSF_WEAPON_TRACK_PROCESSOR
+  end_processor
+
+  processor computer WSF_GUIDANCE_COMPUTER
+    proportional_navigation_gain  6.0
+    velocity_pursuit_gain         6.0
+    g_bias                        1.0
+    maximum_commanded_g           25.0 g       # Ref 2
+    update_interval               0.1 s
+  end_processor
+
+  processor fuse WSF_AIR_TARGET_FUSE
+    max_time_of_flight_to_detonate  25.0 sec            # Ref 2 - max range of 12 km
+  end_processor
+end_platform_type
+
+weapon_effects RED_SR_SAM_1_EFFECT WSF_GRADUATED_LETHALITY      # unknown
+   radius_and_pk 20.0 m 0.8
+end_weapon_effects
+
+weapon RED_SR_SAM_1 WSF_EXPLICIT_WEAPON
+   launched_platform_type RED_SR_SAM_1
+   weapon_effects RED_SR_SAM_1_EFFECT
+
+   quantity 8
+   firing_delay           1.0 sec   # unknown
+   salvo_interval         3.0 sec   # unknown
+
+   slew_mode              azimuth_and_elevation
+   azimuth_slew_limits    -180.0 deg 180.0 deg
+   elevation_slew_limits  10.0 deg 80.0 deg  # allow some super-elevation for low-alt targets
+
+   reload_threshold       0
+   reload_increment       8
+   reload_inventory       8
+   reload_time            5 min   # Ref 2
+   inhibit_while_reloading true
+   #fire_inhibit_while_reloading #deprecated
+end_weapon

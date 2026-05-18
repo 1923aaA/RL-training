@@ -1,0 +1,126 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: ssm_missile.txt,v 1.2 2010/12/07 13:39:53 m191713 Exp $
+
+# include the sensor that goes on the missile
+include_once sensors/radar/red_missile_seeker_1.txt
+
+# this is a totally made up missile
+
+aero SSM_MISSILE_AERO WSF_AERO
+# Values estimated from Hoerners Drag book
+   cd_zero_subsonic      0.21
+   cd_zero_supersonic    0.29
+   mach_begin_cd_rise    0.71
+   mach_end_cd_rise      1.4
+   supersonic_cd_slope   -0.05
+   mach_max_supersonic   3
+   reference_area        0.073 m2
+   cl_max                2.0
+end_aero
+
+platform_type SSM_MISSILE WSF_PLATFORM
+   icon Missile
+   mover WSF_GUIDED_MOVER
+      stage 1
+      total_mass 1400.0 lbm
+      fuel_mass 900.0 lbm
+      thrust_duration 18.3 sec
+      thrust 12500 lbf
+      aero SSM_MISSILE_AERO
+      end_stage
+    end_mover
+
+   radar_signature VEHICLE_RADAR_SIGNATURE
+
+   comm uplink WSF_COMM_TRANSCEIVER
+      internal_link data_mgr
+   end_comm
+
+   processor task_mgr WSF_TASK_PROCESSOR
+   end_processor
+   processor data_mgr WSF_TRACK_PROCESSOR
+      purge_interval 400 seconds
+   end_processor
+
+   processor seeker WSF_PERFECT_TRACKER
+      update_interval 0.5 sec
+   end_processor
+
+# vary the g bias and nav gain and the missile will
+# obtain various flight profiles
+   processor test WSF_SCRIPT_PROCESSOR
+      execute at_time 2 min relative
+         WsfProcessor computer = PLATFORM.Processor("computer");
+         computer.ProcessInput("g_bias 2.0");
+         computer.ProcessInput("proportional_navigation_gain 6.0");
+      end_execute
+      execute at_time 5.5 min relative
+         WsfProcessor computer = PLATFORM.Processor("computer");
+         computer.ProcessInput("g_bias 1.5");
+      end_execute
+   end_processor
+
+   processor computer WSF_GUIDANCE_COMPUTER
+       update_interval 0.1 sec
+#       pitchover_guidance
+       proportional_navigation_gain 8.0
+       g_bias 3.0
+#       loft_angle 35 deg
+#       maximum_loft_time 11 sec
+#       min_nav_gain 0.4
+#       max_nav_gain 2.0
+#       nav_gain_factor 3.0
+#       frequency_cutoff 30000 hz
+#       nav_gain_slope_1 1.e-4
+#       nav_gain_slope_2 1.e-6
+       guidance_delay 2 sec
+       maximum_commanded_g 6.0 g
+   end_processor
+
+   processor fuse WSF_GROUND_TARGET_FUSE
+      max_time_of_flight_to_detonate 680 sec
+   end_processor
+
+   sensor seeker  RED_MISSILE_SEEKER_1
+      # on
+      ignore_same_side
+      processor data_mgr
+      filter FILTER_TACTICS
+         range_measurement_sigma 0.5 m
+         bearing_measurement_sigma 0.1 deg
+         elevation_measurement_sigma 0.1 deg
+      end_filter
+   end_sensor
+
+   processor seeker_turn_on WSF_WEAPON_TRACK_PROCESSOR
+     # switch_time 10 sec
+     # turn_on_sensor seeker 80.0 sec after_launch
+     turn_on_sensor seeker at_range 30000.0 m before_intercept
+   end_processor
+end_platform_type
+
+weapon_effects SSM_MISSILE_EFFECT WSF_GRADUATED_LETHALITY
+    # radius_and_pk 20.0 m 0.8 # unknown
+    radius_and_pk 20.0 m 1.0 # set to 1 only for demonstration purposes
+end_weapon_effects
+
+weapon SSM_MISSILE WSF_EXPLICIT_WEAPON
+   launched_platform_type SSM_MISSILE
+   weapon_effects SSM_MISSILE_EFFECT
+   quantity 1
+   firing_delay 0.0 sec # unknown
+   salvo_interval 2.0 sec # unknown
+   slew_mode azimuth
+   azimuth_slew_limits -180.0 deg 180.0 deg
+   tilt 89.9 deg
+   launch_delta_v 60.0 0.0 0.0 fps
+end_weapon
+
+

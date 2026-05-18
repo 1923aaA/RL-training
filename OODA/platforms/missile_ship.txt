@@ -1,0 +1,106 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: missile_ship.txt,v 1.1.1.1 2008/07/28 15:09:03 m210650 Exp $
+
+#                               UNCLASSIFIED
+#
+# Made up missile ship with a radar and comm
+
+include_once platforms/naval_sam_tactics.txt
+include_once platforms/naval_asm_tactics.txt
+include_once platforms/naval_ssm_tactics.txt
+include_once platforms/announce_launch_tactics.txt
+
+include_once sensors/radar/rice_screen.txt
+include_once sensors/radar/sr_sam_fcr_1.txt
+include_once weapons/sam/red_sr_sam_1.txt
+include_once weapons/agm/red_asm_msl.txt
+include_once weapons/ssm/ssm_missile.txt
+
+processor MISSILE_SHIP_DATA_MGR WSF_TRACK_PROCESSOR
+   purge_interval            60 sec
+end_processor
+
+processor MISSILE_SHIP_TASK_MGR NAVAL_SAM_TACTICS
+   on_initialize
+      SENSOR_NAME       = "sr_sam_fcr_1";
+      SENSOR_TRACK_MODE = "default";
+      WEAPON_NAME       = "ssm";
+   end_on_initialize
+end_processor
+
+platform_type MISSILE_SHIP WSF_PLATFORM
+  icon jiangKai
+
+  radar_signature SHIP_RADAR_SIGNATURE
+
+  comm datalink RED_DATALINK
+     network_name <local:master>
+     internal_link data_mgr
+     internal_link 3rd_party_mgr
+  end_comm
+
+  comm ssm_missile_uplink WSF_COMM_TRANSCEIVER
+  end_comm
+
+  processor data_mgr MISSILE_SHIP_DATA_MGR
+  end_processor
+
+  processor task_mgr MISSILE_SHIP_TASK_MGR
+     operating_level ENGAGE 1
+     weapon_uplink_path sr_sam_fcr_1 ssm_missile_uplink
+  end_processor
+
+  processor 3rd_party_mgr ANNOUNCE_LAUNCH_TACTICS
+     on_initialize
+        REMOTE_UPDATE_PLATFORM_TYPE = "RED_NAVAL_HELICOPTER";
+     end_on_initialize
+  end_processor
+
+  processor ssm_task_mgr NAVAL_SSM_TACTICS
+     operating_level ENGAGE 1
+     on_initialize
+        WEAPON_NAME          = "ssm";
+     end_on_initialize
+  end_processor
+
+  track_manager
+     filter FILTER_TACTICS end_filter
+  end_track_manager
+
+  mover WSF_SURFACE_MOVER
+    maximum_speed  31 kts
+  end_mover
+
+  sensor rice_screen RICE_SCREEN
+    on
+    ignore_same_side
+    internal_link data_mgr
+  end_sensor
+
+  sensor sr_sam_fcr_1 SR_SAM_FCR_1
+    off
+    ignore_same_side
+    internal_link data_mgr
+  end_sensor
+
+  weapon ssm SSM_MISSILE
+    location 0 0 -5 m
+    quantity      16
+    internal_link 3rd_party_mgr
+    ignore_launch_platform_velocity true # ignore the movement of the ship
+  end_weapon
+
+  zone full_kinematic
+     circular
+        maximum_altitude 5 km
+        maximum_radius   350 km
+  end_zone
+
+end_platform_type

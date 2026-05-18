@@ -1,0 +1,534 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+# New file created by AFSIM Wizard
+include event_output.txt
+include_once sensors/radar/ew_radar.txt
+include_once platforms/common.txt
+include_once weapons/agm/red_gps_bomb_1.txt
+include_once weapons/agm/red_glide_bomb_1.txt
+include_once platforms/common.txt
+include_once processors/bomber_weapon_release.txt
+xio_interface
+   unicast  192.168.5.7
+   port 39322
+   receive_port 1112
+#   debug yes
+   connect_to_simulations
+   auto_dis_mapping yes
+end_xio_interface
+
+random_seed_time
+
+platform_type SENSORTYPE  WSF_PLATFORM
+  radar_signature VEHICLE_RADAR_SIGNATURE
+
+
+  comm uplink_radio RED_DATALINK_1
+  end_comm
+  
+  comm red_comm TEAM_DATALINK_1
+      network_name red_net
+      internal_link data_mgr
+      internal_link task_mgr
+   end_comm
+   
+  track_manager
+     filter FILTER_TACTICS end_filter
+  end_track_manager
+
+   sensor sense WSF_GEOMETRIC_SENSOR
+      on
+      debug
+      minimum_range 0 m
+      maximum_range 4 km
+      frame_time 0.05 s
+      ignore_same_side
+      internal_link data_mgr
+      azimuth_field_of_view   -180.0 degrees  180.0 degrees
+      elevation_field_of_view  -90.0 degrees   90.0 degrees
+      reports_location
+      reports_velocity
+      reports_iff
+      track_quality 1.0
+   end_sensor
+
+  processor data_mgr WSF_TRACK_PROCESSOR
+     report_interval 3 s
+     purge_interval      10 sec
+     update_interval           4 s
+     report_method on_update_fused
+     fused_track_reporting on 
+     raw_track_reporting        off
+     circular_report_rejection  true
+#    report_to command_chain red_chain commander via red_comm
+  end_processor
+  
+  processor task_mgr WSF_QUANTUM_TASKER_PROCESSOR
+#    report_to command_chain red_chain commander via red_comm
+  end_processor
+  
+  mover WSF_AIR_MOVER
+    maximum_speed         1000 m/s
+    maximum_altitude      1000 m
+    maximum_climb_rate    1614 ft/m
+  end_mover
+
+end_platform_type
+
+execute at_time  0.1 sec absolute 
+     double lat; double lon ; double head; double altitude;
+     for(int i = 1;i<=5;i=i+1)
+     {
+          WsfPlatform p = WsfSimulation.CreatePlatform("SENSORTYPE");
+          // Boundary:
+          // 23:06:03.30N ~ 23:11:26.70N
+          // 120:00:34.15E ~ 120:06:25.85E
+          lat = RANDOM.Uniform(23.1009167, 23.1907500);
+          lon = RANDOM.Uniform(120.0094861, 120.1071806);
+          altitude = RANDOM.Uniform(1000, 4000);
+          p.ProcessInput("icon mq-9");
+          p.ProcessInput("side blue");
+          string loc = write_str("position ", lat, "n ", lon, "e altitude ", altitude, " m  agl ");
+          p.ProcessInput(loc);
+
+          string name = write_str("sensor_",i);
+          WsfPlatform pa = WsfSimulation.AddPlatform(p, name);
+          if (pa.IsValid())
+          {
+          pa.TurnToHeading(RANDOM.Uniform(-180., 180.));
+          }
+          else
+               break;
+     }
+
+end_execute
+
+#
+#platform sensor_1 SENSORTYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:09:12.62n 120:03:37.50e altitude 2959 m agl
+#
+#end_platform
+#
+#platform sensor_2 SENSORTYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:07:02.50n 120:05:14.51e altitude 2860 m agl
+##  edit processor data_mgr
+##     report_to platform decider_4 comm red_comm via red_comm
+##  end_processor 
+#
+#
+#end_platform
+#
+#platform sensor_3 SENSORTYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:09:54.77n 120:05:11.40e altitude 3467 m agl
+##  edit processor data_mgr
+##     report_to platform decider_4 comm red_comm via red_comm
+##  end_processor 
+#
+#end_platform
+#
+#platform sensor_4 SENSORTYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:10:25.15n 120:02:33.59e altitude 2455 m agl
+##  edit processor data_mgr
+##     report_to platform decider_4 comm red_comm via red_comm
+##  end_processor 
+#
+#
+#end_platform
+#
+#
+#platform sensor_5 SENSORTYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:08:53.19n 120:01:32.54e altitude 2066 m agl
+##  edit processor data_mgr
+##     report_to platform decider_4 comm red_comm via red_comm
+##  end_processor 
+#
+#end_platform
+
+
+platform_type DECIDETYPE  WSF_PLATFORM
+  icon A-160
+  radar_signature VEHICLE_RADAR_SIGNATURE
+
+
+  comm uplink_radio RED_DATALINK_1
+  end_comm
+  
+  comm red_comm TEAM_DATALINK_1
+      network_name red_net
+      internal_link data_mgr
+      internal_link task_mgr
+   end_comm
+ 
+   track_manager
+     filter FILTER_TACTICS end_filter
+     # required for inflight updates to work (as currently employed)
+  end_track_manager
+ 
+  
+  processor data_mgr WSF_TRACK_PROCESSOR
+     report_interval 3 s
+#     purge_interval      3 sec
+     update_interval           4 s
+     report_method on_update_fused
+     raw_track_reporting        off
+     circular_report_rejection  true
+#    report_to command_chain red_chain commander via red_comm
+  end_processor
+  
+  processor task_mgr WSF_QUANTUM_TASKER_PROCESSOR
+#    report_to command_chain red_chain commander via red_comm
+  end_processor
+  
+  mover WSF_AIR_MOVER
+    maximum_speed         1000 m/s
+    maximum_altitude      1000 m
+    maximum_climb_rate    1614 ft/m
+  end_mover
+
+end_platform_type
+
+execute at_time  0.15 sec absolute 
+     double lat; double lon ; double head; double altitude;
+     for(int i = 1;i<=4;i=i+1)
+     {
+          WsfPlatform p = WsfSimulation.CreatePlatform("DECIDETYPE");
+          // Boundary:
+          // 23:06:03.30N ~ 23:11:26.70N
+          // 120:00:34.15E ~ 120:06:25.85E
+          lat = RANDOM.Uniform(23.1009167, 23.1907500);
+          lon = RANDOM.Uniform(120.0094861, 120.1071806);
+          altitude = RANDOM.Uniform(1000, 4000);
+          p.ProcessInput("icon mq-9");
+          p.ProcessInput("side blue");
+          string loc = write_str("position ", lat, "n ", lon, "e altitude ", altitude, " m  agl ");
+          p.ProcessInput(loc);
+
+          string name = write_str("decider_",i);
+          WsfPlatform pa = WsfSimulation.AddPlatform(p, name);
+          if (pa.IsValid())
+          {
+          pa.TurnToHeading(RANDOM.Uniform(-180., 180.));
+          }
+          else
+               break;
+     }
+
+end_execute
+
+#platform decider_1 DECIDETYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:10:38.50n 120:04:26.27e altitude 1066 m agl
+#
+#
+#end_platform
+#
+#platform decider_2 DECIDETYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:09:08.60n 120:05:31.30e altitude 2066 m agl
+#
+#
+#end_platform
+#platform decider_3 DECIDETYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:11:03.64n 120:03:00.45e altitude 3066 m agl
+#
+#end_platform
+#
+#platform decider_4 DECIDETYPE
+#   icon mq-9
+#   side blue
+#   heading 270 deg
+#   command_chain red_chain_1 Group_3_3
+#  position 23:09:04.54n 120:02:01.60e altitude 506 m agl
+#
+#end_platform
+#
+
+platform_type BOMBER1 WSF_PLATFORM
+   #indestructible
+   icon bomber
+
+   radar_signature BOMBER_RADAR_SIG
+   infrared_signature BOMBER_INFRARED_SIG
+   optical_signature BOMBER_OPTICAL_SIG
+   
+   comm uplink_radio RED_DATALINK_1
+   end_comm
+  
+   comm red_comm TEAM_DATALINK_1
+  
+      network_name red_net
+   end_comm
+   
+   track_manager
+     filter FILTER_TACTICS end_filter
+   end_track_manager
+
+   mover WSF_AIR_MOVER
+   end_mover
+   
+   weapon  mrm  MEDIUM_RANGE_RADAR_MISSILE
+      quantity 8
+   end_weapon
+
+   processor fire-em BOMBER_WEAPON_RELEASE
+   end_processor
+   
+   processor weapon_mgr WSF_TASK_PROCESSOR
+   end_processor
+
+#   execute at_time 100 sec absolute
+#      Weapon("red_gps_bomb_1").FireSalvo(MasterTrackList().TrackEntry(0),2);
+#      Weapon("red_glide_bomb_1").FireSalvo(MasterTrackList().TrackEntry(1),2);
+#   end_execute
+end_platform_type
+
+execute at_time  0.2 sec absolute 
+     double lat; double lon ; double head; double altitude;
+     for(int i = 1;i<=5;i=i+1)
+     {
+          WsfPlatform p = WsfSimulation.CreatePlatform("BOMBER1");
+          // Boundary:
+          // 23:06:03.30N ~ 23:11:26.70N
+          // 120:00:34.15E ~ 120:06:25.85E
+          lat = RANDOM.Uniform(23.1009167, 23.1907500);
+          lon = RANDOM.Uniform(120.0094861, 120.1071806);
+          altitude = RANDOM.Uniform(1000, 4000);
+          p.ProcessInput("icon mq-9");
+          p.ProcessInput("side blue");
+          string loc = write_str("position ", lat, "n ", lon, "e altitude ", altitude, " m  agl ");
+          p.ProcessInput(loc);
+
+          string name = write_str("striker_",i);
+          WsfPlatform pa = WsfSimulation.AddPlatform(p, name);
+          if (pa.IsValid())
+          {
+          pa.TurnToHeading(RANDOM.Uniform(-180., 180.));
+          }
+          else
+               break;
+     }
+
+end_execute
+
+#platform striker_1 BOMBER
+#   side blue
+#   icon mq-9
+#   heading 80 deg
+#   command_chain red_chain_3 Group_1_3
+#   position 23:08:14.27n 120:03:35.65e altitude 548 m
+#
+#end_platform
+#
+#
+#platform striker_2 BOMBER
+#   side blue
+#   icon mq-9
+#   heading 80 deg
+#   command_chain red_chain_3 Group_1_3
+#   position 23:07:27.82n 120:03:11.53e altitude 1825 m
+#
+#
+#end_platform
+#
+#platform striker_3 BOMBER
+#   side blue
+#   icon mq-9
+#   heading 80 deg
+#   command_chain red_chain_3 Group_1_3
+#   position 23:07:53.09n 120:04:40.17e altitude 2751 m
+#
+#end_platform
+#
+#platform striker_4 BOMBER
+#   side blue
+#   icon mq-9
+#   heading 80 deg
+#   command_chain red_chain_3 Group_1_3
+#   position 23:06:52.10n 120:05:26.78e altitude 1434 m
+#
+#
+#end_platform
+#
+#platform striker_5 BOMBER
+#   side blue
+#   icon mq-9
+#   heading 80 deg
+#   command_chain red_chain_3 Group_1_3
+#   position 23:10:43.95n 120:05:31.06e altitude 1136 m
+#
+#end_platform
+
+platform_type TARGET_TYPE WSF_PLATFORM
+   icon Ground_Radar
+
+   infrared_signature   VEHICLE_INFRARED_SIGNATURE
+   optical_signature    VEHICLE_OPTICAL_SIGNATURE
+   radar_signature      VEHICLE_RADAR_SIGNATURE
+
+   processor task_mgr RED_RADAR_TACTICS
+   end_processor
+end_platform_type
+
+execute at_time  0.2 sec absolute 
+     double lat; double lon ; double head; double altitude;
+     for(int i = 1;i<=10;i=i+1)
+     {
+          WsfPlatform p = WsfSimulation.CreatePlatform("BOMBER");
+          // Boundary:
+          // 23:06:03.30N ~ 23:11:26.70N
+          // 120:00:34.15E ~ 120:06:25.85E
+          lat = RANDOM.Uniform(23.1009167, 23.1907500);
+          lon = RANDOM.Uniform(120.0094861, 120.1071806);
+          altitude = RANDOM.Uniform(50, 600);
+          p.ProcessInput("icon Ground_Radar");
+          p.ProcessInput("side red");
+          string loc = write_str("position ", lat, "n ", lon, "e altitude ", altitude, " m  agl ");
+          p.ProcessInput(loc);
+
+          string name = write_str("target_",i);
+          WsfPlatform pa = WsfSimulation.AddPlatform(p, name);
+          if (pa.IsValid())
+          {
+          pa.TurnToHeading(RANDOM.Uniform(-180., 180.));
+          }
+          else
+               break;
+     }
+
+end_execute
+
+#platform target_1 TARGET_TYPE
+#   side red
+#   position 23:09:57.19n 120:01:05.78e
+#      altitude 50 m agl
+#   heading 90 deg
+#   
+#end_platform
+#
+#platform target_2 TARGET_TYPE
+#   side red
+#   position 23:07:17.00n 120:04:31.79e
+#      altitude 40 m agl
+#   heading 90 deg
+#
+#end_platform
+#
+#platform target_3 TARGET_TYPE
+#   side red
+#   position 23:07:25.27n 120:05:38.45e
+#      altitude 30 m agl
+#   heading 90 deg
+#   
+#end_platform
+#
+#platform target_4 TARGET_TYPE
+#   side red
+#   position 23:07:21.02n 120:01:57.79e
+#      altitude 20 m agl
+#   heading 90 deg
+#
+#end_platform
+#
+#platform target_5 TARGET_TYPE
+#   side red
+#   position 23:09:27.84n 120:02:01.58e
+#      altitude 10 m agl
+#   heading 90 deg
+#   
+#end_platform
+#
+#platform target_6 TARGET_TYPE
+#   side red
+#   position 23:09:25.88n 120:03:31.72e
+#      altitude 300 m agl
+#   heading 90 deg
+#
+#end_platform
+#
+#platform target_7 TARGET_TYPE
+#   side red
+#   position 23:10:19.58n 120:04:10.69e
+#      altitude 1 km agl
+#   heading 90 deg
+#   
+#end_platform
+#
+#platform target_8 TARGET_TYPE
+#   side red
+#   position 23:10:17.10n 120:05:36.42e
+#      altitude 400 m agl
+#   heading 90 deg
+#
+#end_platform
+#
+#platform target_9 TARGET_TYPE
+#   side red
+#   position 23:08:14.85n 120:05:12.90e
+#      altitude 0.5 km agl
+#   heading 90 deg
+#
+#end_platform
+#
+#platform target_10 TARGET_TYPE
+#   side red
+#   position 23:11:03.49n 120:02:15.31e
+#      altitude 400 m agl
+#   heading 90 deg
+#end_platform
+
+
+zone zone1
+   polygonal
+   fill_color 255 255 0 63
+   line_color 0 255 0
+      minimum_altitude 0 feet
+      maximum_altitude 4 km
+      lat_lon
+      point 23:11:26.70n 120:00:34.15e
+      point 23:06:03.30n 120:00:34.15e
+      point 23:06:03.30n 120:06:25.85e
+      point 23:11:26.70n 120:06:25.85e
+end_zone
+
+route Route-2
+
+     label Waypoint-1
+     position 23:11:26.70n 120:00:34.15e altitude 0.00 ft     
+end_route

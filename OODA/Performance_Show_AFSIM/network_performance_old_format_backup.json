@@ -1,0 +1,176 @@
+{
+  "metadata": {
+    "test_start_time": "2025-05-30T16:29:00.991120",
+    "description": "Link16标准TDMA网络性能监控数据 - 只保留最新快照",
+    "stats_interval": 5,
+    "metrics": [
+      "throughput_mbps",
+      "latency_ms",
+      "packet_delivery_rate",
+      "jitter_ms"
+    ],
+    "detailed_metrics": [
+      "bits_per_second",
+      "packets_sent",
+      "packets_received",
+      "lost_packets",
+      "retransmits",
+      "out_of_order",
+      "duplicates"
+    ],
+    "tdma_standard": "Link16",
+    "frame_structure": "1536时隙/帧, 12秒/帧"
+  },
+  "latest_snapshot": {
+    "timestamp": "2025-05-30T16:29:31.839682",
+    "connections": {
+      "node2->node1": {
+        "original_node": "2",
+        "destination_node": "1",
+        "route_path": "2-1",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 44852551.232033044,
+          "avg_bits_per_second": 22426276.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 204800,
+          "total_test_duration_sec": 0.45,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      },
+      "node1->node2": {
+        "original_node": "1",
+        "destination_node": "2",
+        "route_path": "1-2",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 24426752.541968573,
+          "avg_bits_per_second": 24426753.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 102400,
+          "total_test_duration_sec": 0.17,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      },
+      "node3->node1": {
+        "original_node": "3",
+        "destination_node": "1",
+        "route_path": "3-2-1",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 23188405.79710145,
+          "avg_bits_per_second": 23188406.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 102400,
+          "total_test_duration_sec": 0.19,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      },
+      "node4->node2": {
+        "original_node": "4",
+        "destination_node": "2",
+        "route_path": "4-1-2",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 23087112.13820703,
+          "avg_bits_per_second": 23087112.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 102400,
+          "total_test_duration_sec": 0.17,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      },
+      "node1->node3": {
+        "original_node": "1",
+        "destination_node": "3",
+        "route_path": "1-2-3",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 21529566.360052563,
+          "avg_bits_per_second": 21529566.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 102400,
+          "total_test_duration_sec": 0.27,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      },
+      "node4->node1": {
+        "original_node": "4",
+        "destination_node": "1",
+        "route_path": "4-1",
+        "test_types": [
+          "TCP"
+        ],
+        "detailed_stats": {
+          "total_bits_per_second": 24494677.67013515,
+          "avg_bits_per_second": 24494678.0,
+          "total_packets_sent": 0,
+          "total_packets_received": 0,
+          "total_lost_packets": 0,
+          "total_retransmits": 0,
+          "total_out_of_order": 0,
+          "total_duplicates": 0,
+          "total_bytes_transferred": 102400,
+          "total_test_duration_sec": 0.22,
+          "packet_delivery_rate": 100.0,
+          "effective_loss_rate": 0.0
+        }
+      }
+    },
+    "performance": {
+      "avg_throughput_mbps": 23.192,
+      "max_throughput_mbps": 24.67,
+      "avg_latency_ms": 0.03467,
+      "avg_packet_delivery_rate": 100.0,
+      "avg_jitter_ms": 0.01803
+    }
+  },
+  "networking_info": {
+    "average_networking_time": "151",
+    "latest_networking_time": "128"
+  },
+  "controlling_info": {
+    "average_controlling_time": "2.1",
+    "latest_controlling_time": "2.23"
+  }
+}

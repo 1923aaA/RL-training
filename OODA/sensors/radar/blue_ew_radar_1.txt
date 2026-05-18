@@ -1,0 +1,30 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+antenna_pattern GS_RADAR_ANTENNA
+  uniform_pattern
+    peak_gain 37.92 db               # From www.fas.org
+  end_uniform_pattern
+end_antenna_pattern
+
+sensor BLUE_EW_RADAR_1 WSF_RADAR_SENSOR
+  on
+  frame_time 30 sec
+  hits_to_establish_track 3 5
+  hits_to_maintain_track 1 2
+  transmitter
+    power           145.6 kw          # average
+    frequency       435 mhz           # 420-450 mhz
+    antenna_pattern GS_RADAR_ANTENNA
+  end_transmitter
+
+  reports_location
+
+end_sensor
+

@@ -1,0 +1,24 @@
+{
+  "targets": [
+    {
+      "node_id": "target_1",
+      "ooda_loop_time": "--",
+      "target_discovery_time": "--"
+    },
+    {
+      "node_id": "target_10",
+      "ooda_loop_time": "--",
+      "target_discovery_time": "--"
+    },
+    {
+      "node_id": "target_8",
+      "ooda_loop_time": "--",
+      "target_discovery_time": "--"
+    },
+    {
+      "node_id": "target_9",
+      "ooda_loop_time": "--",
+      "target_discovery_time": "--"
+    }
+  ]
+}

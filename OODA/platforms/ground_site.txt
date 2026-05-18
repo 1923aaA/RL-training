@@ -1,0 +1,25 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+# =============================================================================
+# A dummy ground target for the SAR demo
+# =============================================================================
+
+radar_signature GROUND_SITE_RADAR_SIG
+   constant 50 m^2
+end_radar_signature
+
+optical_signature GROUND_SITE_OPTICAL_SIG
+   constant 50 m^2
+end_optical_signature
+
+platform_type GROUND_SITE WSF_PLATFORM
+   icon Ground_Radar
+   radar_signature      GROUND_SITE_RADAR_SIG
+   optical_signature    GROUND_SITE_OPTICAL_SIG
+end_platform_type

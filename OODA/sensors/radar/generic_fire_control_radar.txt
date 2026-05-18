@@ -1,0 +1,262 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+##############################################################################
+#
+#  File:  generic_file_control_radar.txt
+#
+#  Specify GENERIC_FIRE_CONTROL_RADAR
+#  This version is designed to be placed on a ground or naval platform.
+#  Keys to moving to a different platform are
+#    location 0 0 -30 m                    // 30 m above platform
+#    elevation_slew_limits -5.0 degrees 85 degrees
+#
+#                    ***** NOTICE *****
+#
+#  This definition is not intended to be representative of the real system.
+#  Some undefined characteristics of the system have been provided so the
+#  achieved performance matches the values defined in the noted references.
+#
+# Reference:
+#   unknown
+#
+#  June 08: added to wiki
+#
+#                      UNCLASSIFIED
+###############################################################################
+#
+#  SNIPPET: example of how the sensor could be included in a simulation
+#
+// include_once generic_fire_control_radar.txt
+//
+// ... simulation setup & initialization commands
+//
+#---#---#---
+# setup a platform that will contain the fire control radar
+#---#---#---
+//platform sensor_platform LARGE_SHIP_TYPE
+//  icon Sovremennyy        # good 3D option for large boats
+//  side red
+//  heading 0.0 deg
+//
+//  route
+//    position 07:06:00n 117:11:16e altitude 300 m msl
+//      speed 30 knots
+//    position 08:21:12n 117:11:16e altitude 300 m msl
+//      speed 30 knots
+//  end_route
+//
+#---#---#---
+#  Add the Fire Control Radar sensor
+#---#---#---
+//  add sensor fc-radar GENERIC_FIRE_CONTROL_RADAR
+//    on                  # initialize sensor as 'on'
+//    debug               # print debug info about sensor operation
+//    location 0 0 -20 m
+//    ignore catSatellite
+//  end_sensor
+//
+#---#---#---
+#  Add a sensor that will initiate the 'start track' needed by the
+#  Fire Control Radar
+#---#---#---
+//  add sensor search_radar BLUE_SHIP_MF_RADAR
+//    on
+//    debug
+//    location 0 0 -20 m
+//    processor track_manager
+//    ignore catSatellite
+//  end_sensor
+//
+#---#---#---
+#  Add processsors and state machine that control the Fire Control Radar mode
+#---#---#---
+//  add processor track_manager WSF_TRACK_PROCESSOR
+//    drop_after_inactive 1 min
+//  end_processor
+//
+//  add processor thinker WSF_TASK_PROCESSOR
+//
+//    script bool ShouldICancel()
+//      bool shouldCancel=false;
+//      if (TRACK.IFF_Friend()                    ||
+//         (! TRACK.WithinZoneOf(PLATFORM, "engage_zone")) ||
+//         //(TasksReceivedFor(TRACK.TrackId()) == 0)      || can self engage
+//         //(! WeaponsRemaining())                  ||
+//         (PLATFORM.RelativeAltitudeOf(TRACK) > 5747)    ||
+//         (PLATFORM.RelativeHeadingOf(TRACK) > 179.51)   ||
+//         (PLATFORM.RelativeOffsetOf(TRACK) > 42250)    ||
+//         (PLATFORM.GroundRangeTo(TRACK) > 45250))
+//      {
+//        shouldCancel = true;
+//      }
+//
+//      return shouldCancel;
+//    end_script
+//
+//    script void ReleaseResources()
+//      // Cancel any tasks I have assigned this track
+//      CancelTask(TRACK.TrackId(), "");
+//      // If I received an assignment for this track the inform I'm done
+//      if (TasksReceivedFor(TRACK.TrackId()) != 0)
+//      {
+//        TaskComplete(TRACK.TrackId(), "");
+//      }
+//    end_script
+//
+//    // DETECTED is the initial state and the state where tracks reside
+//    // until they are determined to be of interest.
+//    evaluation_interval DETECTED 2.0 sec
+//    state DETECTED
+//
+//      next_state TRACKING
+//        if (ShouldICancel())
+//        {
+//          ReleaseResources();
+//          return true;
+//        }
+//
+//        StartTracking(TRACK, "Track", "fc-radar", "TRACK", PLATFORM);
+//        return true;
+//      end_next_state
+//    end_state
+//
+//    evaluation_interval TRACKING 2.0 sec
+//    state TRACKING
+//      next_state TRACKING
+//        return true;
+//      end_next_state
+//    end_state
+//  end_processor
+//
+//end_platform
+#
+###############################################################################
+
+antenna_pattern GENERIC_FIRE_CONTROL_RADAR_ANTENNA_PATTERN
+  circular_pattern
+    beamwidth           1.0 deg
+    peak_gain           30 dB
+  end_circular_pattern
+end_antenna_pattern
+
+sensor GENERIC_FIRE_CONTROL_RADAR WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                               # default
+  no_debug                          # default
+
+  //debug_scheduler
+  //debug_tracker
+
+  #-- Articulated Part Commands
+  #   Slew mode and limits, yaw, pitch, & roll info goes here
+  location                0 0 -20 m
+  slew_mode               azimuth_and_elevation
+  azimuth_slew_limits     -180.0 degrees  180 degrees
+  elevation_slew_limits   -5.0 degrees    85 degrees
+
+  #-- Sensor Level Commands
+  show_calibration_data             # display radar characteristics
+  selection_mode          multiple  # can have more than one mode active at a time
+
+  #-- Detection Scheduling Commands
+  # none at this time
+
+  # Maximum number of targets being engaged: 6
+  # Maximum number of missles being guided: 12
+
+  # The mode_template specifies a common set of parameters for
+  #   all modes of the radar.
+  # Note that individual modes may override the template values.
+
+  mode_template
+    # Given that 18 total objects can be tracked,
+    #   we'll assume that the dwell time is 1/18 of the revist time.
+    #   The value of the revist time is not known so we'll simply assume 1 second.
+    #   This will give 'reasonable' track update rates.
+
+    frame_time                    1 sec
+    revisit_time                  1 sec
+    dwell_time                    0.0555555 sec       # 1/18 sec
+
+    #-- Beam Commands
+    transmitter
+      antenna_pattern             GENERIC_FIRE_CONTROL_RADAR_ANTENNA_PATTERN
+      power                       250 kw
+      frequency                   3 ghz
+      pulse_repetition_frequency  250 hz
+      //internal_loss               10 db
+    end_transmitter
+
+    receiver
+      antenna_pattern             GENERIC_FIRE_CONTROL_RADAR_ANTENNA_PATTERN
+      bandwidth                   1 mhz
+      //internal_loss               19 dB
+    end_receiver
+
+    swerling_case                 1
+    number_of_pulses_integrated   44        # integrated by Marcum-Swerling detector
+    detector_law                  square
+    probability_of_false_alarm    1.0e-6
+
+    # Field of view is used to cull targets, usually set larger than scan limits
+    #    -5  deg detects ships more than 457.19 ft (139.35 m) away
+    #   -10 deg detects ships more than 226.85 ft (69.14 m) away
+    azimuth_field_of_view         -60.0 deg 60.0 deg
+    elevation_field_of_view       -5.0 deg 65.0 deg   # detects surface ships
+    //elevation_field_of_view       5.0 deg 65.0 deg    # okay for aircraft
+
+    azimuth_error_sigma           0.03 deg
+    elevation_error_sigma         0.03 deg
+    //TODO range_error_sigma        2 km
+    range_error_sigma             100 m
+
+    #-- Track Formation Commands
+    reports_bearing
+    reports_elevation
+    reports_frequency
+    reports_location
+    reports_velocity
+    reports_iff
+
+  end_mode_template
+
+  mode ACQUIRE
+    # Search to acquire tracks
+    scan_mode                 azimuth_and_elevation
+    azimuth_scan_limits       -4.0 degrees 4.0 degrees
+    elevation_scan_limits     -4.0 degrees 4.0 degrees
+
+    # If maximum_request_count > 0 then this mode only responds
+    #   to explicit requests as initiated by WsfTaskManager::StartTracking.
+    maximum_request_count     1
+    track_quality             0.8  # Near 'weapon quality'
+    hits_to_establish_track   3 5  # 3 of last 5 scans to establish track
+    hits_to_maintain_track    1 5  # 1 of last 5 scans to maintain  track
+    on_success                TRACK
+  end_mode
+
+  mode TRACK
+    # Allow the sensor to continue search processing while also performing tracking.
+    # This mode does not 'scan'. The target must be in the beam.
+    # If maximum_request_count > 0 then this mode only responds
+    #   to explicit requests as initiated by WsfTaskManager::StartTracking.
+    maximum_request_count     6
+    track_quality             1.0  # 'weapon quality'
+    hits_to_establish_track   3 5  # 3 of last 5 scans to establish track
+    hits_to_maintain_track    1 5  # Allow 5 seconds of coasting (5th failure will drop)
+  end_mode
+
+  #-- Filter commands
+  filter WSF_ALPHA_BETA_FILTER
+    alpha  0.6
+    beta  0.2
+  end_filter
+
+end_sensor

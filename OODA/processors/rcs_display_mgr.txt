@@ -1,0 +1,139 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+# script to make RCS display based on frequency and aspect of radar.
+
+# TODO make layers or a map of WsfDraws to handle multiple sensor tracks
+# TODO parametrize the list of excluded and included tracks/sensors/targets 
+#      in a filter script for StartDisplaying
+
+processor RCS_DISPLAY_MGR WSF_TASK_PROCESSOR
+
+   script_debug_writes on
+   #show_state_transitions
+   #show_task_messages
+
+   script_variables
+      WsfDraw draw = WsfDraw();
+      
+      double mTrackUpdateStaleTime = 30.0; // seconds
+   end_script_variables
+
+   on_initialize
+   end_on_initialize
+
+   # Script to determine aspect of track location
+   script Array<double> ComputeAspect()
+      Array<double> AzEl;
+      if (TRACK.ReportedLocation().IsValid())
+      {
+         AzEl = PLATFORM.AspectOf(TRACK.CurrentLocation(), 4.0/3.0);
+      }
+      return AzEl;
+   end_script
+   
+   script void Draw()
+      Array<double> AzEl = ComputeAspect();
+      
+      # use the track ID as a unique draw ID
+      # a track icon and a line to the track icon
+      # is drawn at each track update
+      string trackId = TRACK.TrackId().ToString();
+      double az = TRACK.Elevation();
+      //draw.Erase(trackId);
+      draw.SetId(trackId);
+      draw.SetDuration(1.0); # this is faster than calling erase every time
+      draw.SetColor(0,1,0);
+      //draw.BeginIcons(TRACK.Heading(), "Wedge");
+      //draw.BeginPolyline();
+      //draw.Vertex(TRACK.CurrentLocation());
+      //draw.End();
+
+      # Draw a line to the track
+      draw.SetLineStyle("dashed");
+      draw.BeginLines();
+      draw.Vertex(PLATFORM);
+      draw.Vertex(TRACK.CurrentLocation());
+      draw.End();
+      
+      draw.SetLineStyle("solid");
+      draw.BeginPolyline();
+      //writeln(TRACK.Target().Name());
+      for (int i = -180; i < 180.0; i=i+1)
+      {
+         double r = 1000 * MATH.LinearToDB(1 + PLATFORM.RadarCrossSection(i,AzEl[1], "default", TRACK.Frequency()));
+         //writeln("   r=", r, " Az=", i, " El=", AzEl[1]);
+		 // Spherical (r, theta, phi) to Cartesian (x,y,z), ignoring elevation angle as we only do waterline display.
+         double x = r * MATH.Cos(i + PLATFORM.Heading()); //sin(AzEl[1]);
+         double y = r * MATH.Sin(i + PLATFORM.Heading()); // sin(AzEl[1]);
+		 //double z = r * cos(AzEl[1]);
+         //writeln("x=", x, " y=", y);
+         draw.VertexNED(PLATFORM, x, y, 0.0);     
+      }
+      draw.End();
+   end_script
+   
+   script bool StartDisplaying()
+      if (TRACK.LocationValid() &&
+          (
+           //TRACK.TargetType() == "ACQ_RADAR" ||
+           TRACK.TargetType() == "TTR_RADAR"
+          )
+         )
+      {
+         Draw();
+         return true;
+      }
+      return false;
+   end_script
+   
+   script void UpdateDisplay()
+         Draw();
+   end_script
+   
+   script void StopDisplaying()
+      draw.Erase(TRACK.TrackId().ToString());
+      writeln("erase: ", TRACK.TrackId().ToString());
+   end_script
+
+   evaluation_interval DETECTED 1.0 sec
+   state DETECTED
+      next_state START_DISPLAYING
+         return ((TRACK.TimeSinceUpdated() < mTrackUpdateStaleTime) );
+      end_next_state
+   end_state
+
+   evaluation_interval START_DISPLAYING 1.0 sec
+   state START_DISPLAYING
+      next_state DETECTED
+         return (TRACK.TimeSinceUpdated() >= mTrackUpdateStaleTime);
+      end_next_state
+
+      next_state IS_DISPLAYING
+         return StartDisplaying();
+      end_next_state
+   end_state
+
+   evaluation_interval IS_DISPLAYING 1.0 sec
+   state IS_DISPLAYING
+      next_state START_DISPLAYING
+         bool stopped = false;
+         if (TRACK.TimeSinceUpdated() < mTrackUpdateStaleTime)
+         {
+            UpdateDisplay();
+         }
+         else
+         {
+            StopDisplaying();
+            stopped = true;
+         }
+         return stopped;
+      end_next_state
+   end_state
+end_processor

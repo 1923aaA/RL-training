@@ -1,0 +1,199 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#
+#  File:  generic_ground_radar.txt
+#
+#                                 ***** NOTICE *****
+#
+# This definition is not intended to be representative of the real system.
+# Some undefined characteristics of the system have been provided so the
+# achieved performance matches the values defined in the noted references.
+#
+# Reference:
+#  Based on AN/TPS-1D search radar
+#  (A)  Model of AN/TPS-1D search radar.
+#       Ref: "Radar System Analysis", Barton, P 238
+#
+#  June 08: added to file repository
+#
+#                                     UNCLASSIFIED
+###############################################################################
+#
+#   Minimum Additional data needed in user's file
+#    Specify the location and orientation of the sensor on the platform.
+#      (e.g., location   0.0 0.0 -30 m)
+#    Specify pitch of plane for antenna rotation (default = 0)
+#      (e.g., pitch    0 deg)
+#
+#  SNIPPET: example of how the sensor could be included in a simulation
+#
+// include_once generic_ground_radar.txt
+//
+// ... simulation setup & initialization commands
+//
+#
+# Setup a platform with ground radar sensor
+#
+// platform sensor_platform COMMAND_TOWER_TYPE
+//   icon      Tower             # or: Ground_Radar
+//   side      red
+//   category  catTower
+//
+//   position 00:00:00n 103:49:00e altitude 15 m msl
+//   heading  0.0 deg
+//
+//   edit sensor GENERIC_GROUND_RADAR
+//     frame_time                0.1 sec
+//     elevation_field_of_view   -5.0 deg  89.0 deg
+//     range_product             194.4 dBsm      # overrides 1 m^2 detection
+//     transmitter
+//       power                   0.0000001 MW
+//     end_transmitter
+//   end_sensor
+//
+// end_platform
+#
+# Setup a target platform
+#
+// platform UAV_|| UAV_TYPE
+//   icon Global_Hawk
+//   side blue
+//   heading 180.0 deg
+//
+//   route
+//     position 00:50:00n 103:49:00e altitude 300 m msl
+//       speed 200 knots
+//     position 00:02:00n 103:49:00e altitude 300 m msl
+//       speed 200 knots
+//   end_route
+// end_platform
+#
+###############################################################################
+
+#-- Basic Antenna Pattern
+antenna_pattern GROUND_RADAR_ANTENNA_PATTERN
+  constant_pattern
+  peak_gain             28 dB       # (A) antenna gain
+  azimuth_beamwidth     4 deg       # (A) azimuth beamwidth
+  elevation_beamwidth   10 deg      # (A) actual beamwidth
+  elevation_beamwidth   10.5 deg    # (A) w/ 0.5 deg error
+  end_constant_pattern
+end_antenna_pattern
+
+#-- Basic Ground Radar Specification
+sensor GENERIC_GROUND_RADAR WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                                     # default
+  no_debug                                # default
+
+  #-- Articulated Part Commands
+  pitch                     0 deg         # default
+
+  #  slew_mode: [fixed|azimuth|elevation|both|azimuth_and_elevation]
+  slew_mode                 azimuth       # default: fixed
+
+  #  slew limits define ability of subsystem to respond to cue
+  #  if not cued, then oriented in direction spec'd by yaw, pitch, & roll
+  //azimuth_slew_limits     -180 deg 180 deg    # default
+  //elevation_slew_limits   -5 deg  90 deg
+
+  #  The minimum_range, maximum_range, and field of view are not required.
+  #  They are simply used for quick culling and should be generous.
+  #  (i.e. the field_of_view limits should be probably be larger than the
+  #  corresponding slew limit because the beam can probably detect things
+  #  outside the slew limit).
+  minimum_range             0 nm          # default = 0
+  maximum_range             160 nm        # set to maximum "scope limit"
+
+  # scan mode: [fixed|azimuth|elevation|both|azimuth_and_elevation]
+  scan_mode                 azimuth               # default: fixed
+  elevation_scan_limits     0.0 deg 5.0 deg       # default: -90.0 90.0
+  azimuth_scan_limits       -180.0 deg 180.0 deg  # default
+
+  #-- Sensor Level Commands
+  show_calibration_data                   # display radar characteristics
+
+  #-- Detection Scheduling Commands
+  frame_time                10 sec        # set to 6 RPM (A)
+
+  #-- Beam Commands
+  detector_law              linear        # [linear|square|log]
+
+  //signal_processor simple_doppler
+    # Default "minimum_doppler_speed" is zero
+    # TPS-1D does not do Doppler processing
+    // minimum_doppler_speed      0 kts
+  //end_signal_processor
+
+  number_of_pulses_integrated   1
+  one_m2_detect_range           65 km
+  probability_of_false_alarm    1.0e-6    # Default: 1.0e-8
+  swerling_case                 4         # Swerling model: [0|1|2|3|4]
+
+  transmitter
+  antenna_pattern     GROUND_RADAR_ANTENNA_PATTERN
+
+   # Enter antenna tilt parameter to specify constant angle of
+   #  antenna above horizon for all azimuths of its scan.
+   #  antenna_tilt      5 deg             # Actual tilt (optical)
+   #  antenna_tilt      4.75 deg          # Adjusted tilt (allowing for 4/3 earth)
+   #  antenna_tilt      0 deg             # No tilt (used with double-beamwidth)
+   antenna_tilt       4.75 deg            # (A) w/ 0.5 deg error
+
+   # NOTE: Any values for peak power and frequency can be entered
+   #    when using the simple "cookie-cutter" model because
+   #    range for detecting a target of a specified radar
+   #    cross section calculated using parameter: "one_m2_detect_range"
+   power              100 kw              # nominal peak power of radar transmitter
+   frequency          3 ghz               # nominal frequency of radar transmitter
+
+  end_transmitter
+
+  receiver
+   # Specify antenna pattern for receiver (see its definition above)
+   antenna_pattern      GROUND_RADAR_ANTENNA_PATTERN
+
+   # Enter antenna tilt parameter to specify constant angle of
+   #  antenna above horizon for all azimuths of its scan.
+   #  antenna_tilt      5 deg             # Actual tilt (optical)
+   #  antenna_tilt      4.75 deg          # Adjusted tilt (allowing for 4/3 earth)
+   #  antenna_tilt      0 deg             # No tilt (used with double-beamwidth)
+   antenna_tilt       5 deg
+  end_receiver
+
+  #-- Track Formation Commands
+  azimuth_error_sigma     0.001 deg
+  elevation_error_sigma   0.001 deg
+  range_error_sigma       7.0 m
+
+  # Default value for "hits_to_establish_track" is 1 1
+  hits_to_establish_track   3 5           # 3 of last 5 scans to establish track
+
+  # Default value for "hits_to_maintain_track" is 1 1
+  hits_to_maintain_track    1 4           # 1 of last 4 scans to maintain  track
+
+  #-- Track Formation Commands
+  reports_location
+  reports_velocity
+  reports_range
+  reports_bearing
+  reports_elevation
+  reports_signal_to_noise
+  reports_frequency
+  //reports_side
+
+  #-- Track Filter Commands
+  filter WSF_ALPHA_BETA_FILTER
+   alpha  0.4
+   beta   0.1
+  end_filter
+
+end_sensor

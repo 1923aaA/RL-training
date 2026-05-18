@@ -1,0 +1,33 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+include platforms/uav_eoir.txt
+include platforms/ground_site.txt
+
+include scenarios/eoir_demo.txt
+
+# Specify parameters for a replay file
+event_pipe
+   file output/eoir_demo.aer
+end_event_pipe
+
+event_output
+   file output/eoir_demo.evt
+   enable SENSOR_DETECTION_ATTEMPT
+   enable SENSOR_DETECTION_CHANGED
+   enable SENSOR_MODE_ACTIVATED
+   enable SENSOR_MODE_DEACTIVATED
+   enable SENSOR_TRACK_INITIATED
+#   enable SENSOR_TRACK_UPDATED
+   enable SENSOR_TRACK_DROPPED
+   enable SENSOR_TURNED_ON
+   enable SENSOR_TURNED_OFF
+end_event_output
+
+end_time 20 min

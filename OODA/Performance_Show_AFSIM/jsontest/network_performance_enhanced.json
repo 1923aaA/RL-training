@@ -1,0 +1,187 @@
+{
+  "metadata": {
+    "test_start_time": "2025-05-23T22:31:51.120577",
+    "description": "Link16标准TDMA网络性能监控数据 - 包投递率统计",
+    "stats_interval": 10,
+    "metrics": [
+      "throughput_mbps",
+      "latency_ms",
+      "packet_delivery_rate",
+      "jitter_ms"
+    ],
+    "detailed_metrics": [
+      "bits_per_second",
+      "packets_sent",
+      "packets_received",
+      "lost_packets",
+      "retransmits",
+      "out_of_order",
+      "duplicates"
+    ],
+    "tdma_standard": "Link16",
+    "frame_structure": "1536时隙/帧, 12秒/帧"
+  },
+  "performance_snapshots": [
+    {
+      "timestamp": "2025-05-23T22:34:35.424613",
+      "connections": {
+        "Aaa->Ccc": {
+          "original_node": "Aaa",
+          "destination_node": "Ccc",
+          "route_path": "1-7-12",
+          "test_types": [
+            "TCP"
+          ],
+          "detailed_stats": {
+            "total_bits_per_second": 201217330.98927283,
+            "avg_bits_per_second": 201217331.0,
+            "total_packets_sent": 0,
+            "total_packets_received": 0,
+            "total_lost_packets": 0,
+            "total_retransmits": 0,
+            "total_out_of_order": 0,
+            "total_duplicates": 0,
+            "total_bytes_transferred": 0,
+            "total_test_duration_sec": 1.11,
+            "packet_delivery_rate": 100.0,
+            "effective_loss_rate": 0.0
+          }
+        },
+        "Aaa->Bbb": {
+          "original_node": "Aaa",
+          "destination_node": "Bbb",
+          "route_path": "1-14-20",
+          "test_types": [
+            "TCP"
+          ],
+          "detailed_stats": {
+            "total_bits_per_second": 201217330.98927283,
+            "avg_bits_per_second": 201217331.0,
+            "total_packets_sent": 0,
+            "total_packets_received": 0,
+            "total_lost_packets": 0,
+            "total_retransmits": 0,
+            "total_out_of_order": 0,
+            "total_duplicates": 0,
+            "total_bytes_transferred": 0,
+            "total_test_duration_sec": 1.11,
+            "packet_delivery_rate": 100.0,
+            "effective_loss_rate": 0.0
+          }
+        },
+        "Ccc->Aaa": {
+          "original_node": "Ccc",
+          "destination_node": "Aaa",
+          "route_path": "2-12-21",
+          "test_types": [
+            "TCP"
+          ],
+          "detailed_stats": {
+            "total_bits_per_second": 201193401.96789727,
+            "avg_bits_per_second": 201193402.0,
+            "total_packets_sent": 0,
+            "total_packets_received": 0,
+            "total_lost_packets": 0,
+            "total_retransmits": 0,
+            "total_out_of_order": 0,
+            "total_duplicates": 0,
+            "total_bytes_transferred": 0,
+            "total_test_duration_sec": 1.13,
+            "packet_delivery_rate": 100.0,
+            "effective_loss_rate": 0.0
+          }
+        }
+      },
+      "performance": {
+        "avg_throughput_mbps": 201.217,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.9,
+        "avg_packet_delivery_rate": 99.2,
+        "avg_jitter_ms": 0.76
+      }
+    },
+    {
+      "timestamp": "2025-05-23T22:34:40.424613",
+      "performance": {
+        "avg_throughput_mbps": 199.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    },
+
+    {
+      "timestamp": "2025-05-23T22:34:45.424613",
+      "performance": {
+        "avg_throughput_mbps": 199.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    },
+    {
+      "timestamp": "2025-05-23T22:34:50.424613",
+      "performance": {
+        "avg_throughput_mbps": 199.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    },
+    {
+      "timestamp": "2025-05-23T22:34:55.424613",
+      "performance": {
+        "avg_throughput_mbps": 199.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    },
+    {
+      "timestamp": "2025-05-23T22:35:00.424613",
+      "performance": {
+        "avg_throughput_mbps": 199.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    },
+    {
+      "timestamp": "2025-05-23T22:35:05.424613",
+      "performance": {
+        "avg_throughput_mbps": 190.817,
+        "max_throughput_mbps": 201.217,
+        "avg_latency_ms": 0.0,
+        "avg_packet_delivery_rate": 99.9,
+        "avg_jitter_ms": 0.19
+      }
+    }
+
+    
+  ],
+  "networking_info": {
+    "average_networking_time": "23", 
+    "latest_networking_time": "25" 
+  },
+  "controlling_info": {
+    "average_controlling_time": "18", 
+    "latest_controlling_time": "19" 
+  },
+  "networking_info": {
+    "average_networking_time": "20", 
+    "latest_networking_time": "23" 
+  },
+  "controlling_info": {
+    "average_controlling_time": "19", 
+    "latest_controlling_time": "20" 
+  }
+  
+}
+
+
+

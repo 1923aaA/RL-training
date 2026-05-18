@@ -1,0 +1,271 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#
+# File:  generic_radar_10nm.txt
+#
+# Define Generic Radar - Detects 1 m^2 target at 10 nm
+#
+#                           ***** NOTICE *****
+#
+# This definition is not intended to be representative of the real system.
+# Some undefined characteristics of the system have been provided so the
+# achieved performance matches the values defined in the noted references.
+#
+# Reference:
+#   Most values were derived from a basic TPS-1D radar.
+#   Cited Data sources:
+#     (A)   l of AN/TPS-1D search radar.
+#          Ref: "Radar System Analysis", Barton, P 238
+#
+#  June 08:  added to file repository
+#
+#                             UNCLASSIFIED
+###############################################################################
+# Includes:
+#    antenna_pattern: receive/transmit pattern
+#    sensor:
+#      one_m2_detect_range
+#      frame time
+#      scan mode
+#      pitch
+#      azimuth & elevation scan limits
+#      minimum & maximum range
+#      azimuth_field_of_view & elevation_field_of_view
+#      slew_mode, azimuth_slew_limits, & elevation_slew_limits
+#      transmitter: uses predefined antenna pattern, antenna_tilt,
+#              power, & frequency
+#      receiver: detection_threshold & bandwidth
+#      signal_processor simple_doppler
+#         minimum_doppler_speed
+#      end_signal_processor
+#      number of pulses integrated
+#      detector law
+#      swerling case
+#      probability of false alarm
+#      error sigmas: azimuth, elevation, & range
+#      Kalman filter specification
+#      hits to establish track and hits to maintain track
+#
+###############################################################################
+#
+#    Minimum Additional data needed in user's file
+#      Specify the location and orientation of the sensor on the platform.
+#        (e.g., location    0.0 0.0 -30 m)
+#      Specify pitch of plane for antenna rotation (default = 0)
+#        (e.g., pitch      0 deg)
+#
+#  SNIPPET: example of how the sensor could be included in a simulation
+#
+// include_once generic_radar_10nm.txt
+//
+// ... simulation setup & initialization commands
+#
+# Setup a platform with generic radar
+#
+//platform_type COMMAND_TOWER_TYPE WSF_PLATFORM
+//    icon Tower
+//    side gray
+//    category catTower
+//
+//    radar_signature   TOWER_RADAR_SIGNATURE
+//    optical_signature TOWER_OPTICAL_SIGNATURE
+//
+//    processor track_manager WSF_TRACK_PROCESSOR
+//      on
+//      report_interval      1 sec
+//      report_raw_tracks
+//    end_processor
+//
+//    sensor ground-radar GENERIC_RADAR_10NM    # includes antenna pattern
+//      on
+//      debug
+//      yaw 0.0 deg                             # position to point toward targets
+//      processor track_manager
+//    end_sensor
+//
+//  end_platform_type
+//
+//
+//  platform sensor_platform COMMAND_TOWER_TYPE
+//    icon      Tower                           # or: Ground_Radar
+//    side      red
+//    category  catTower
+//
+//    position 00:00:00n 103:49:00e altitude 15 m msl
+//    heading  0.0 deg
+//
+//    edit sensor GENERIC_RADAR_10NM
+//      frame_time                0.1 sec
+//      elevation_field_of_view   -5.0 deg  89.0 deg
+//      range_product             194.4 dBsm    # overrides 1 m^2 detection
+//      transmitter
+//        power                   0.0000001 MW
+//      end_transmitter
+//    end_sensor
+//
+//  end_platform
+#
+# Setup a target platform
+#
+//  platform_type UAV_TYPE WSF_PLATFORM
+//    icon predator    # or: Global_Hawk, predator, ucav, UCAV_Navy
+//    side gray
+//    category catUAV
+//
+//    radar_signature   ONE_M_SQUARED_RADAR_SIGNATURE
+//    optical_signature ONE_M_SQUARED_OPTICAL_SIGNATURE
+//
+//    mover WSF_AIR_MOVER
+//      roll_rate_limit               1 rad/sec
+//      default_linear_acceleration   1.0 g
+//      default_radial_acceleration   6.5 g
+//      default_climb_rate            17.3 fps
+//      maximum_speed                 130.0 knots
+//      maximum_altitude              15000 ft
+//      minimum_altitude              50 ft
+//      maximum_linear_acceleration   8 g
+//    end_mover
+//
+//  end_platform_type
+//
+//  platform UAV_|| UAV_TYPE
+//    icon Global_Hawk
+//    side blue
+//    heading 180.0 deg
+//
+//    route
+//      position 00:50:00n 103:49:00e altitude 300 m msl
+//        speed 200 knots
+//      position 00:02:00n 103:49:00e altitude 300 m msl
+//        speed 200 knots
+//    end_route
+//  end_platform
+//
+// ... event output specifications
+#
+###############################################################################
+
+# Basic Antenna pattern
+antenna_pattern GENERIC_RADAR_10NM_ANTENNA_PATTERN    # (A)
+  constant_pattern
+    peak_gain               28 dB             # (A) antenna gain
+    azimuth_beamwidth       4 deg             # (A) azimuth beamwidth
+    elevation_beamwidth     10 deg            # (A) actual beamwidth
+    elevation_beamwidth     10.5 deg          # (A) w/ 0.5 deg error
+  end_constant_pattern
+end_antenna_pattern
+
+# Basic Radar sensor.  Designed to detect 1 m^2 at 10 nm.
+sensor GENERIC_RADAR_10NM WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                                         # default
+  no_debug                                    # default
+
+  #-- Articulated Part Commands
+  #   Set scan_mode (fixed, azimuth, elevation, both, azimuth_and_elevation)
+  scan_mode                 both              # Default: fixed
+
+  #   Slew mode and limits, yaw, pitch, & roll info goes here
+  slew_mode                 azimuth
+  azimuth_scan_limits       -180.0 deg  180.0 deg # Default: -180.0 deg 180.0 deg
+  elevation_scan_limits     0.0 deg    5.0 deg    # Default: -90.0 90.0
+  //minimum_range           0 nm
+  maximum_range             160 nm
+  azimuth_field_of_view     -60.0 deg 60.0 deg  # 120 degrees symmetric
+  elevation_field_of_view   -22.5 deg 22.5 deg  # 45 degrees symmetric
+  //azimuth_slew_limits       -45 deg  45 deg     # Default:  -57.29 deg  57.29 deg
+  //elevation_slew_limits     -5 deg  25 deg      # Default: -28.64 deg 28.64 deg
+
+  #-- Sensor Level Commands
+  show_calibration_data                 # display radar characteristics
+
+  #-- Detection Scheduling Commands
+  # none at this time
+
+  #-- Detection Scheduling Commands
+  frame_time  10 sec                    # rotating antenna scan rate = 6 RPM
+
+  # Specify pitch of plane for antenna rotation (Default: 0)
+  //pitch                     0 deg
+
+  #-- Beam Commands
+  #   NOTE:  Both range_product & one_m2_detect_range force radar equation
+  #          to adjust parameters so detection occurs at a specific range.
+  #           Use one or the other.
+  #   Specify maximum detection range for a target with one square meter
+  one_m2_detect_range         10.0 nm
+
+  transmitter
+    antenna_pattern           GENERIC_RADAR_10NM_ANTENNA_PATTERN
+
+    # Enter antenna tilt parameter to specify constant angle of
+    #    antenna above horizon for all azimuths of its scan.
+    //  antenna_tilt            5 deg         # Actual tilt (optical)
+    //  antenna_tilt            4.75 deg      # Adjusted tilt (allowing for 4/3 earth)
+    //  antenna_tilt            0 deg         # No tilt (used with double-beamwidth)
+    antenna_tilt              4.75 deg      # (A) w/ 0.5 deg error
+
+    # NOTE: Any values for peak power and frequency can be entered
+    #     when using the simple "cookie-cutter" model because
+    #     range for detecting a target of a specified radar
+    #     cross section calculated using parameter:
+    #     "one_m2_detect_range"
+    power                   100 kw    # peak power
+    frequency               3 ghz     # nominal S-band frequency
+                                      # (for detection & tracking)
+
+  end_transmitter
+
+  receiver
+    detection_threshold     12 dB     # From Eric Auger
+    bandwidth               2 mhz     # From Eric Auger
+  end_receiver
+
+  // signal_processor simple_doppler
+     # Default "minimum_doppler_speed" is zero
+     # (e.g., minimum_doppler_speed  0 kts)
+     # TPS-1D does not do Doppler processing
+     // minimum_doppler_speed      0 kts
+  // end_signal_processor
+
+  number_of_pulses_integrated   1
+  detector_law                  linear
+  swerling_case                 4
+  probability_of_false_alarm    1.0e-6
+
+  azimuth_error_sigma           0.001 deg
+  elevation_error_sigma         0.001 deg
+  range_error_sigma             7.0 m
+
+  filter WSF_KALMAN_FILTER
+    range_measurement_sigma     1 m
+    elevation_measurement_sigma 0.001 deg
+    bearing_measurement_sigma   0.001 deg
+    process_noise_sigmas_XYZ    1.0 1.0 1.0
+  end_filter
+
+  # Default value for "hits_to_establish_track" is 1 1
+  # (e.g., hits_to_establish_track  1 1)
+  hits_to_establish_track       3 5  // 3 of last 5 scans to establish track
+
+  # Default value for "hits_to_maintain_track" is 1 1
+  # (e.g., hits_to_maintain_track  1 1)
+  hits_to_maintain_track        1 4  // 1 of last 4 scans to maintain  track
+
+  #-- Track Formation Commands
+  reports_bearing
+  reports_elevation
+  reports_frequency
+  reports_location
+  reports_range
+  reports_velocity
+
+end_sensor

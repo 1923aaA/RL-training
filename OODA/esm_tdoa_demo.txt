@@ -1,0 +1,291 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+# Simple ESM TDOA demo.
+
+define_path_variable CASE esm_tdoa_demo
+log_file output/$(CASE).log
+
+# ****************************************************************************
+# Define the system types (movers, sensors, weapons, etc.)
+# ****************************************************************************
+
+radar_signature FIGHTER_RADAR_SIGNATURE
+   constant 10 m^2
+end_radar_signature
+
+# ****************************************************************************
+#                     Early Warning Radar
+
+antenna_pattern EW_RADAR_ANTENNA
+  rectangular_pattern
+     peak_gain           35 dB
+     minimum_gain       -20 dB
+     azimuth_beamwidth   10 deg
+     elevation_beamwidth 45 deg
+  end_rectangular_pattern
+end_antenna_pattern
+
+# A simple EW radar
+
+sensor EW_RADAR WSF_RADAR_SENSOR
+
+   frame_time                1  sec
+
+   # Specify the location and orientation of the sensor on the platform.
+   location                  0.0 0.0 -30 m
+
+   # The sensor sweeps only in azimuth
+   scan_mode                 azimuth
+   azimuth_scan_limits       -180 deg 180 deg
+
+   # The field of view, minimum_range and maximum_range are not required.
+   # They are simply used for quick culling and should be generous.
+   # (i.e. the field_of_view limits should be probably be larger than the
+   # corresponding slew limit because the beam can probably detect things
+   # outside the slew limit).
+   elevation_field_of_view  -2.5 deg 42.5 deg
+
+   minimum_range        0 nm
+   maximum_range      400 km  # really 225 km
+
+   one_m2_detect_range 225 km
+
+   transmitter
+      power           750 kw
+      frequency       900 mhz
+      bandwidth       0.1 mhz
+      pulse_width                  10  usec
+      pulse_repetition_interval    750 usec // max PRI range of 225 km
+      antenna_pattern EW_RADAR_ANTENNA
+      antenna_tilt     10 deg
+   end_transmitter
+   receiver
+      antenna_pattern EW_RADAR_ANTENNA
+      antenna_tilt     10 deg
+      frequency       900 mhz
+      bandwidth         1 mhz
+   end_receiver
+
+   hits_to_establish_track   3 5   # 3 of last 5 scans to establish track
+   hits_to_maintain_track    1 4   # 1 of last 4 scans to maintain  track
+
+   reports_location
+   reports_velocity
+   reports_signal_to_noise
+   reports_range
+   reports_bearing
+   reports_elevation
+end_sensor
+
+# ****************************************************************************
+#                       TDOA TRIMSIM Processor
+
+processor TRIMSIM_PROCESSOR WSF_TRIMSIM_PROCESSOR
+   debug
+   debug_level 2
+   minimum_detections 2
+end_processor
+
+# ****************************************************************************
+#                       ESM Detector
+
+antenna_pattern ESM_ANTENNA
+   constant 0 db
+end_antenna_pattern
+
+sensor ESM_SENSOR WSF_ESM_SENSOR
+   frame_time              4 sec
+
+   slew_mode               fixed
+
+   maximum_range           400 km
+
+   receiver
+      antenna_pattern      ESM_ANTENNA
+      detection_threshold  5 db
+      noise_power          -180 dbw
+      internal_loss        0 db
+   end_receiver
+
+   error_model trimsim_error
+      north_position_error_sigma      0.1 ft
+      east_position_error_sigma       0.1 ft
+      down_position_error_sigma       0.1 ft
+      reference_time_error            5.0 ns
+      inter_system_time_delay         5.0 ns
+      sensor_timing_error             0.0 s
+      atmospheric_refraction_residual 0.0
+   end_error_model
+
+   frequency_band          0.1 ghz  20 ghz
+
+   reports_location
+   reports_type
+   reports_frequency
+end_sensor
+
+# ****************************************************************************
+# Define the platform types
+# ****************************************************************************
+
+platform_type EW_RADAR_SITE WSF_PLATFORM
+   icon Ground_Radar
+
+   mover WSF_GROUND_MOVER end_mover
+
+   sensor ew_radar EW_RADAR
+      on
+      processor track_manager
+      ignore_same_side
+   end_sensor
+
+   processor track_manager WSF_TRACK_PROCESSOR
+   end_processor
+end_platform_type
+
+platform_type STRIKER_PLATFORM WSF_PLATFORM
+   icon F-18E
+   side blue
+
+   radar_signature FIGHTER_RADAR_SIGNATURE
+
+   mover WSF_AIR_MOVER end_mover
+
+   sensor esm ESM_SENSOR
+      on
+      processor track_manager
+      ignore_same_side
+   end_sensor
+
+   processor track_manager WSF_TRACK_PROCESSOR
+   end_processor
+end_platform_type
+
+
+# ****************************************************************************
+#                        Define the platform instances
+# ****************************************************************************
+
+platform ew-radar-site EW_RADAR_SITE
+   side red
+
+   route
+      position 37:00:00n 116:00:00w
+      altitude 0.0 ft agl
+      heading   90 deg
+    end_route
+
+   sensor ew_radar
+   end_sensor
+end_platform
+
+platform striker-1 STRIKER_PLATFORM
+   side blue
+
+   route
+      position 33:00:00n 117:00:00w
+      altitude 35000 ft
+      speed     450 kts
+      heading     0 deg
+   end_route
+
+   add processor tdoa TRIMSIM_PROCESSOR
+      #debug
+      sensors
+         sensor esm
+         platform_sensor striker-2 esm
+         platform_sensor striker-3 esm
+      end_sensors
+   end_processor
+end_platform
+
+platform striker-2 STRIKER_PLATFORM
+   side blue
+
+   route
+      position 33:00:00n 116:00:00w
+      altitude 35000 ft
+      speed     450 kts
+      heading     0 deg
+   end_route
+end_platform
+
+
+platform striker-3 STRIKER_PLATFORM
+   side blue
+
+   route
+      position 33:00:00n 115:00:00w
+      altitude 35000 ft
+      speed     450 kts
+      heading     0 deg
+   end_route
+end_platform
+
+event_output
+   #enable COMM_TURNED_OFF
+   #enable COMM_TURNED_ON
+   #enable JAMMING_ATTEMPT
+   #enable JAMMING_REQUEST_CANCELED
+   #enable JAMMING_REQUEST_INITIATED
+   #enable JAMMING_REQUEST_UPDATED
+   #enable LOCAL_TRACK_CORRELATION
+   #enable LOCAL_TRACK_DECORRELATION
+   #enable LOCAL_TRACK_INITIATED
+   #enable LOCAL_TRACK_UPDATED
+   #enable LOCAL_TRACK_DROPPED
+   #enable MESSAGE_DISCARDED
+   #enable MESSAGE_UPDATED
+   #enable MESSAGE_QUEUED
+   #enable MESSAGE_RECEIVED
+   #enable MESSAGE_TRANSMITTED
+   #enable OPERATING_LEVEL_CHANGED
+   #enable PLATFORM_ADDED
+   #enable PLATFORM_DELETED
+   #enable PLATFORM_BROKEN
+   #enable PROCESSOR_TURNED_OFF
+   #enable PROCESSOR_TURNED_ON
+   enable SENSOR_DETECTION_ATTEMPT
+   #enable SENSOR_MODE_ACTIVATED
+   #enable SENSOR_MODE_DEACTIVATED
+   #enable SENSOR_REQUEST_CANCELED
+   #enable SENSOR_REQUEST_INITIATED
+   #enable SENSOR_REQUEST_UPDATED
+   enable SENSOR_TRACK_INITIATED
+   enable SENSOR_TRACK_UPDATED
+   enable SENSOR_TRACK_DROPPED
+   #enable SENSOR_TURNED_ON
+   #enable SENSOR_TURNED_OFF
+   #enable TASK_ASSIGNED
+   #enable TASK_CANCELED
+   #enable TASK_COMPLETED
+   #enable WEAPON_FIRE_ABORTED
+   #enable WEAPON_FIRE_REQUESTED
+   #enable WEAPON_FIRED
+   #enable WEAPON_HIT
+   #enable WEAPON_MISSED
+   #enable WEAPON_RELOAD_STARTED
+   #enable WEAPON_RELOAD_ENDED
+   #enable WEAPON_TERMINATED
+   #enable WEAPON_TURNED_OFF
+   #enable WEAPON_TURNED_ON
+  file output/$(CASE).evt
+end_event_output
+
+# Specify parameters for a replay file
+event_pipe
+   file output/$(CASE).aer
+end_event_pipe
+
+terrain
+   #load_cme_terrain
+end_terrain
+
+end_time 5 min

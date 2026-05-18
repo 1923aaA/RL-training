@@ -1,0 +1,100 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#                          ------ UNCLASSIFIED ------
+#                              BLUE_ABM_TTR Radar
+#
+#           This is the threat detection and tracking radar for blue_lr_sam
+###############################################################################
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+# This definition is intended to be EXPORTABLE. It is defined using publicly
+# available, attributable sources. DO NOT ADD ANYTHING BASED ON OTHER SOURCES!
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+###############################################################################
+#
+# References: (PDF files contained in the subdirectory blue_abm_ttr_ref)
+#
+# 1) Jane's JREW AN/TPY-2, 08-Jan-2009
+#    a) X-band (8 to 12.5 GHz)
+#    b) Trailer mounted, single faced 9.2 m^2 phased-array antenna with 25,344
+#       solid-state transceiver modules
+#    c) 1,000 km detection range.
+###############################################################################
+
+antenna_pattern BLUE_ABM_TTR_ANTENNA
+   circular_pattern
+      beamwidth                        1.0 deg              # Typical for phased-array tracker
+      peak_gain                        40.0 db              # Typical for phased-array tracker
+end_antenna_pattern
+
+sensor BLUE_ABM_TTR WSF_RADAR_SENSOR
+
+#  The antenna can be tilted to various angles. This is just a nominal value.
+   pitch                               45 deg
+
+   frame_time                          1 sec
+
+   # This is just for culling purposes
+   maximum_range                       1100 km              # Ref 1, plus a little slop
+
+   electronic_beam_steering            azimuth_and_elevation
+   electronic_beam_steering_limit      70 deg               # Typical for phased-array
+   electronic_beam_steering_loss_exponent 1.4               # Typical for phased-array
+
+   scan_mode                           azimuth_and_elevation
+   azimuth_scan_limits                 -70 deg 70 deg       # Same as steering limits
+   elevation_scan_limits               -70 deg 70 deg       # Same as steering limits
+
+   transmitter
+      antenna_pattern                  BLUE_ABM_TTR_ANTENNA
+      frequency                        10 ghz               # Ref 1, 8-12 ghz
+
+      # Because nothing was specified about the power (other than the fact that it has
+      # to be less than the 1.1 MW from the generator, which is also used for other needs)
+      # a real value cannot be defined. But something that so the model can compute a
+      # receiver noise power that results in a detection range of 1000 km.
+      #
+      # The actual power isn't important because passive detection of the transmitter is
+      # not being considered.
+
+      power                            200 kw
+
+      # We don't know anything else about the transmitted signal (pulse width, PRF,
+      # pulse_compression), so nothing is supplied.
+
+   end_transmitter
+
+   receiver
+      antenna_pattern                  BLUE_ABM_TTR_ANTENNA
+
+      # We don't know anything about the receiver (noise figure, etc.) The effective
+      # noise power is derived by the model to get the required nominal detection range.
+      #
+      # This will probably result in a ridiculously low effective noise power, but
+      # because we don't know anything about the transmitted signal modulation, we just
+      # have let it ride. It shouldn't be important because we aren't worried about jamming
+      # or passive detection.
+
+   end_receiver
+
+   detection_threshold                 12.8 db              # Nominal Swerling case 1, Pd=0.5
+   one_m2_detect_range                 1000 km              # Ref 1
+
+   hits_to_establish_track             2 3
+   hits_to_maintain_track              1 3
+   reports_range
+   reports_bearing
+   reports_elevation
+   reports_velocity
+   reports_iff
+end_sensor

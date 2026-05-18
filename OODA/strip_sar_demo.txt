@@ -1,0 +1,38 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+define_path_variable CASE strip_sar_demo
+log_file output/$(CASE).log
+
+include platforms/uav_sar.txt
+include platforms/ground_site.txt
+
+include scenarios/strip_sar_demo.txt
+
+event_pipe
+   file output/$(CASE).aer
+end_event_pipe
+
+event_output
+   file output/$(CASE).evt
+   enable LOCAL_TRACK_INITIATED
+   enable LOCAL_TRACK_UPDATED
+   enable LOCAL_TRACK_DROPPED
+#  enable SENSOR_DETECTION_ATTEMPT
+   enable SENSOR_DETECTION_CHANGED
+   enable SENSOR_MODE_ACTIVATED
+   enable SENSOR_MODE_DEACTIVATED
+   enable SENSOR_TRACK_INITIATED
+#  enable SENSOR_TRACK_UPDATED
+   enable SENSOR_TRACK_DROPPED
+   enable SENSOR_TURNED_ON
+   enable SENSOR_TURNED_OFF
+end_event_output
+
+end_time 20 min

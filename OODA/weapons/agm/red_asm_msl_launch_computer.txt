@@ -1,0 +1,41 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+# * * ************************************** * *
+# *   ****** Demonstration input file ******   *
+# *   ******      UNCLASSIFIED        ******   *
+# * * ************************************** * *
+
+# Launch/engagement computer for the RED_ASM_MSL
+
+script bool RED_ASM_MSL_LaunchComputer(WsfTrack aTrack,
+                                 WsfPlatform aLauncher,
+                                 double aLaunchDelay)
+
+   bool canIntercept = false;
+
+   # TODO assuming launcher at 0 alt.  need AGL of target
+   double tgtAlt = aLauncher.RelativeAltitudeOf(aTrack);
+
+   double shootDelay = 0.0;
+
+   # simple wpn-spd data for now
+   double maxRng = 120000;
+   double maxTOF = 392.0;
+   double avgSpd = maxRng / maxTOF;
+
+   WsfWaypoint intercept = WsfWaypoint();
+   double tti = aLauncher.InterceptLocation2D(aTrack, intercept, avgSpd,
+aLaunchDelay + shootDelay);
+   if ((tti > 0.0) && (tti < maxTOF))
+   {
+      canIntercept = true;
+   }
+
+   return canIntercept;
+end_script

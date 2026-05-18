@@ -1,0 +1,16 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#  This file is included by weapons that use the SHOW_SPENT_STAGES facility
+###############################################################################
+
+script_variables
+   Map<string, bool> SHOW_SPENT_STAGES = Map<string, bool>();
+end_script_variables
+

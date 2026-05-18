@@ -1,0 +1,71 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+# * * ************************************** * *
+# *   ****** Demonstration input file ******   *
+# *   ******      UNCLASSIFIED        ******   *
+# * * ************************************** * *
+
+# this file defines a script processor that implements
+# tactics that announce to subordinate when a weapon is launched
+# that requires 3rd party updating
+
+processor ANNOUNCE_LAUNCH_TACTICS WSF_TASK_PROCESSOR
+
+   #script_debug_writes on
+   #show_state_transitions
+   #show_task_messages
+
+   script_variables
+      string REMOTE_UPDATE_PLATFORM_TYPE;
+
+      # this should not be modified by user
+      string mUpdateTaskStr = "Update";
+   end_script_variables
+
+   on_message
+      type WSF_STATUS_MESSAGE
+         script
+            WsfStatusMessage message = (WsfStatusMessage)MESSAGE;
+            if (message.Status() == "WEAPON_FIRED")
+            {
+               # get the explicit weapon platform that was created
+               WsfPlatform weaponPlatform = message.Platform();
+
+               # create a track to send as an assignment with the appropriate
+               # aux data
+               WsfTrackId trackId = message.RequestId();
+               WsfTrack newTrack = PLATFORM.MasterTrackList().FindTrack(trackId);
+               if (newTrack.IsValid())
+               {
+                  newTrack = WsfTrack(newTrack);
+                  string name = weaponPlatform.Name();
+                  newTrack.SetAuxData("weapon_platform", name);
+                  writeln_d(" Assignment track aux data: ", newTrack.AuxDataString("weapon_platform"));
+
+                  # assign the task
+                  # loop on command chains platform belongs to
+                  int i;
+                  for (i=0; i < PLATFORM.CommandChainCount(); i = i + 1)
+                  {
+                     string chainName = PLATFORM.CommandChainEntry(i).Name();
+                     foreach (WsfPlatform sub in PLATFORM.Subordinates())
+                     {
+                        if (sub.Type() == REMOTE_UPDATE_PLATFORM_TYPE)
+                        {
+                           bool assigned = AssignTask(newTrack, mUpdateTaskStr, sub);
+                           if (assigned) break;
+                        }
+                     }
+                  }
+               }
+            }
+         end_script
+   end_on_message
+
+end_processor

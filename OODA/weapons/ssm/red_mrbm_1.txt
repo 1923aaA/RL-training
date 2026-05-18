@@ -1,0 +1,421 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#                          ------ UNCLASSIFIED ------
+#                                  RED_MRBM_1
+###############################################################################
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+# This definition is intended to be EXPORTABLE. It is defined using publicly
+# available, attributable sources. DO NOT ADD ANYTHING BASED ON OTHER SOURCES!
+#
+# ***** WARNING ***** WARNING ***** WARNING ***** WARNING ***** WARNING *****
+#
+###############################################################################
+#
+# NOTE: If you modify any parameter in this file, you must rerun 'weapon_tools'
+#       with 'red_mrbm_1_lcg.txt' as input to regenerate the launch computer data.
+#
+###############################################################################
+#
+# This model is built using data from unclassified sources as follows:
+#
+# 1) Jane's DF-21 (CSS-5)
+#       RED_MRBM parameters
+#          Length: 10.7 m
+#          Body Diameter: 1.4 m
+#          Launch weight: 14,700 kg
+#          Payload: Single warhead, 600 kg
+#          Minimum range 500 km, Maximum range 2500 km
+#
+#       RED_MRBM_4/RED_MRBM_1 parameters
+#          Length: 12.3 m
+#          Body Diameter: 1.4 m
+#          Launch weight: 15,200 kg
+#          Payload: Single warhead, 500 kg
+#          Minimum range 600 km, Maximum range 2150 km
+#
+#       RED_MRBM_1 RV is believed to have pop-out fins and an active radar seeker.
+#
+# 2) http://www.astronautix.com/lvs/df21.htm
+#          Length: 10.43 m
+#          Diameter: 1.4 m
+#          Total Mass: 14,664 kg
+#          Stage 1 gross mass: 10,000 kg
+#          Stage 2 gross mass: 4,000 kg
+#          Warhead mass: 600 kg
+#
+# 3) http://en.wikipedia.org/wiki/Space_Shuttle_Solid_Rocket_Booster
+#       Because there is no data that gives the mass of the propellant, it is
+#       assumed that it will follow the ratio of the fuel mass/total mass for
+#       the Space Shuttle solid rockets:
+#
+#          Propellant Mass: 500,000 kg
+#          Inert (empty) Mass: 91,000 kg
+#          Fuel Mass / Total Mass = 500,000 / 591,000 = 0.846
+#
+#       As a point of reference, it also quotes the specific impulse as 242 secs.
+#
+# 4) http://en.wikipedia.org/wiki/Solid-fuel_rocket
+#       Indicates 'a typical solid fuel rocket motor may have a specific impulse
+#       of 265 sec'.
+#
+# 5) http://en.wikipedia.org/wiki/Specific_impulse
+#       Indicates specific impulse of 250 sec for 'solid rocket technologies'.
+#
+###############################################################################
+
+###############################################################################
+#           Support for explicit representation of spent stages
+#
+# Platforms will be created for spent stages if one the global script variables
+# is defined as follows:
+#
+# script_variables
+#    SHOW_SPENT_STAGES["ALL"] = true;            # For any weapon
+#    SHOW_SPENT_STAGES["RED_MRBM_1"] = true;         # For just this weapon type
+# end_script_variables
+###############################################################################
+
+include_once show_spent_stages.txt
+
+##### Stage 1
+
+aero RED_MRBM_1_SPENT_STAGE_1_AERO WSF_AERO          # TODO
+   reference_area            16.62 ft^2
+   aspect_ratio              1.0
+   cl_max                    5.0
+   zero_lift_cd              0.7
+end_aero
+
+infrared_signature RED_MRBM_1_SPENT_STAGE_1_INFRARED_SIG
+   constant 1 watts/steradian
+end_infrared_signature
+
+optical_signature  RED_MRBM_1_SPENT_STAGE_1_OPTICAL_SIG
+   constant 1 m^2
+end_optical_signature
+
+radar_signature    RED_MRBM_1_SPENT_STAGE_1_RADAR_SIG
+   constant 1 m^2
+end_radar_signature
+
+platform_type RED_MRBM_1_SPENT_STAGE_1 WSF_PLATFORM
+   icon Scud_Missile
+
+   infrared_signature RED_MRBM_1_SPENT_STAGE_1_INFRARED_SIG
+   optical_signature  RED_MRBM_1_SPENT_STAGE_1_OPTICAL_SIG
+   radar_signature    RED_MRBM_1_SPENT_STAGE_1_RADAR_SIG
+
+   mover WSF_GUIDED_MOVER
+      integration_timestep   0.01 secs
+      stage 1
+         aero                RED_MRBM_1_SPENT_STAGE_1_AERO
+         total_mass          1618.0 kg
+      end_stage
+   end_mover
+
+   processor fuse WSF_GROUND_TARGET_FUSE
+   end_processor
+end_platform_type
+
+##### Stage 2
+
+aero RED_MRBM_1_SPENT_STAGE_2_AERO WSF_AERO          # TODO
+   reference_area            16.62 ft^2
+   aspect_ratio              1.0
+   cl_max                    5.0
+   zero_lift_cd              0.7
+end_aero
+
+infrared_signature RED_MRBM_1_SPENT_STAGE_2_INFRARED_SIG
+   constant 1 watts/steradian
+end_infrared_signature
+
+optical_signature  RED_MRBM_1_SPENT_STAGE_2_OPTICAL_SIG
+   constant 1 m^2
+end_optical_signature
+
+radar_signature    RED_MRBM_1_SPENT_STAGE_2_RADAR_SIG
+   constant 10 m^2
+end_radar_signature
+
+platform_type RED_MRBM_1_SPENT_STAGE_2 WSF_PLATFORM
+   icon Scud_Missile
+
+   infrared_signature RED_MRBM_1_SPENT_STAGE_2_INFRARED_SIG
+   optical_signature  RED_MRBM_1_SPENT_STAGE_2_OPTICAL_SIG
+   radar_signature    RED_MRBM_1_SPENT_STAGE_2_RADAR_SIG
+
+   mover WSF_GUIDED_MOVER
+      integration_timestep   0.01 secs
+      stage 1
+         aero                RED_MRBM_1_SPENT_STAGE_2_AERO
+         total_mass          708.0 kg
+      end_stage
+   end_mover
+
+   processor fuse WSF_GROUND_TARGET_FUSE
+   end_processor
+end_platform_type
+
+###############################################################################
+# Signature data is unknown...
+
+infrared_signature RED_MRBM_1_INFRARED_SIG
+   constant 1 watts/steradian
+end_infrared_signature
+
+optical_signature  RED_MRBM_1_OPTICAL_SIG
+   constant 1 m^2
+end_optical_signature
+
+radar_signature    RED_MRBM_1_RADAR_SIG
+   constant 20 m^2
+end_radar_signature
+
+# Nominal lethality data.
+
+weapon_effects RED_MRBM_1_EFFECT WSF_GRADUATED_LETHALITY
+   radius_and_pk 1000.0 m 1.0
+end_weapon_effects
+
+###############################################################################
+
+aero RED_MRBM_1_STAGE_1_AERO WSF_AERO
+   reference_area            1.539 m^2           # 1.4 m diameter (Ref 1)
+   aspect_ratio              2.0
+   cl_max                    4.5
+
+   # Values estimated from Hoerner's Drag book
+   cd_zero_subsonic          0.10
+   cd_zero_supersonic        0.35
+   mach_begin_cd_rise        0.95
+   mach_end_cd_rise          1.30
+   mach_max_supersonic       6.00
+end_aero
+
+aero RED_MRBM_1_STAGE_2_AERO WSF_AERO
+   reference_area            1.539 m^2           # 1.4 m diameter (Ref 1)
+   aspect_ratio              2.0
+   cl_max                    4.5
+
+   # Values estimated from Hoerner's Drag book
+   cd_zero_subsonic          0.10
+   cd_zero_supersonic        0.35
+   mach_begin_cd_rise        0.95
+   mach_end_cd_rise          1.30
+   mach_max_supersonic       6.00
+end_aero
+
+aero RED_MRBM_1_RV_AERO WSF_AERO
+   # Based on the line drawing from Janes, it appears the RV is about 60% of the
+   # stage 1/2 diameter. So, 1.4 * 0.6 = 0.84m
+
+   reference_area            0.554 m^2           # 0.84 m diameter
+   aspect_ratio              2.0
+   cl_max                    4.5
+
+   # Values estimated from Hoerner's Drag book
+   cd_zero_subsonic          0.10
+   cd_zero_supersonic        0.35
+   mach_begin_cd_rise        0.95
+   mach_end_cd_rise          1.30
+   mach_max_supersonic       6.00
+end_aero
+
+###############################################################################
+
+mover RED_MRBM_1_MOVER WSF_GUIDED_MOVER
+   integration_timestep      0.005 secs
+   update_interval           0.05 secs
+
+   # Total mass for RED_MRBM_1 is 15,200 kg (Ref 1). Ref 2 is the only thing that
+   # states the mass of the stages and that is for the orignal RED_MRBM_1.
+   #
+   # For original RED_MRBM_1 (Ref 2)
+   #    Total   = 14,664 kg
+   #    Stage 1 = 10,000 kg
+   #    Stage 2 =  4,000 kg
+   #    Payload =    600 kg
+   #    Assume the shroud is the remaining 64 kg
+   #
+   # For the RED_MRBM_1, we'll assume the shroud is the same 64 kg and the payload
+   # is 500 kg (Ref 1). We'll ratio the stage 1 and stage 2 masses.
+   #
+   # Total - Shroud - Payload = 15,200 - 64 - 500 = 14,636
+   # Stage 1 = 14,636 * (10,000 / 14,000) = 10,454
+   # Stage 2 = 14,636 * (4,000  / 14,000) =  4,182
+
+   # The burn times were set so as to match the ratio of the fuel masses.
+   # The specific impulse was tuned to get a match on maximium range.
+
+   stage 1
+      aero                   RED_MRBM_1_STAGE_1_AERO
+      total_mass             10454 kg
+      fuel_mass              8844 kg             # 10,454 * 0.846 (using Ref 3)
+      specific_impulse       260 sec             # Ref 4/5
+      thrust_duration        90 sec
+   end_stage
+
+   stage 2
+      aero                   RED_MRBM_1_STAGE_2_AERO
+      total_mass             4246 kg             # Stage + shroud = 4182 + 64
+      fuel_mass              3538 kg             # 4182 * 0.846 (using Ref 3)
+      specific_impulse       260 sec             # Ref 4/5
+      thrust_duration        36 sec
+   end_stage
+
+   stage 3
+      aero                   RED_MRBM_1_RV_AERO
+      total_mass             500 kg              # Ref 1
+   end_stage
+end_mover
+
+###############################################################################
+
+processor RED_MRBM_1_GUIDANCE WSF_GUIDANCE_COMPUTER
+
+   # Go vertical for a short time.
+
+   phase LIFTOFF
+      guidance_delay                   100.0 sec
+
+      # NOTE: Do not use altitude for the criteria for starting pitch over as
+      # trajectory is VERY sensitive to the TIME when pitch over starts. If it
+      # were to be used, a minor changes in the launcher altitude would cause
+      # pitch over to start at a different time!
+
+      next_phase PITCH_OVER when phase_time >= 2.0 sec     # About 100 ft
+   end_phase
+
+   # Pitch over to the desired flight path angle from the launch computer.
+
+   phase PITCH_OVER
+      commanded_flight_path_angle      from_launch_computer
+      proportional_navigation_gain     0.0                 # Don't guide to target
+      velocity_pursuit_gain            0.0                 # Don't guide to target
+      maximum_commanded_g              1.0 g
+      next_phase BALLISTIC when on_commanded_flight_path_angle
+   end_phase
+
+   # Continue flight without guidance (gravity turn).
+
+   phase BALLISTIC
+      # Turn the guidance processor off once pure ballistic mode is started.
+      # This shaves several percent off the processor time.
+      on_entry
+        TurnOff();
+      end_on_entry
+      guidance_delay                   2000.0 sec
+   end_phase
+
+end_processor
+
+###############################################################################
+
+platform_type RED_MRBM_1 WSF_PLATFORM
+   icon Scud_Missile
+
+   infrared_signature RED_MRBM_1_INFRARED_SIG
+   optical_signature  RED_MRBM_1_OPTICAL_SIG
+   radar_signature    RED_MRBM_1_RADAR_SIG
+
+   weapon_effects     RED_MRBM_1_EFFECT
+
+   mover RED_MRBM_1_MOVER
+      #show_status
+      #debug
+   end_mover
+
+   processor guidance RED_MRBM_1_GUIDANCE
+      #show_status
+      #show_graphics
+   end_processor
+
+   processor fuse WSF_GROUND_TARGET_FUSE
+      # If the target is killed by another weapon we want to still keep going.
+      coast_time_on_loss_of_target     10000.0 secs
+   end_processor
+
+   weapon stage_1 WSF_EXPLICIT_WEAPON
+      launched_platform_type RED_MRBM_1_SPENT_STAGE_1
+      launch_delta_v         -100.0 0.0 0.0 m/s
+      quantity 1
+   end_weapon
+
+   weapon stage_2 WSF_EXPLICIT_WEAPON
+      launched_platform_type RED_MRBM_1_SPENT_STAGE_2
+      launch_delta_v         -100.0 0.0 0.0 m/s
+      quantity 1
+   end_weapon
+
+   script void on_stage_separation(int aStage)
+      extern Map<string, bool> SHOW_SPENT_STAGES;
+      if (SHOW_SPENT_STAGES["ALL"] ||
+          SHOW_SPENT_STAGES["RED_MRBM_1"])
+      {
+         if (aStage == 1) Weapon("stage_1").Fire(WsfTrack());
+         if (aStage == 2) Weapon("stage_2").Fire(WsfTrack());
+      }
+   end_script
+end_platform_type
+
+###############################################################################
+
+launch_computer RED_MRBM_1_LAUNCH_COMPUTER WSF_BALLISTIC_MISSILE_LAUNCH_COMPUTER
+   surface_to_surface_table weapons/ssm/red_mrbm_1_launch_data.txt
+end_launch_computer
+
+###############################################################################
+# Provide the aero and mass data to WSF_BALLISTIC_MISSILE_LAUNCH_COMPUTER. This
+# is 'truth data' used by the launch computer for 'trajectory estimation'.
+
+ballistic_missile_launch_computer
+   target_data RED_MRBM_1
+      aero RED_MRBM_1_RV_AERO              # Aero type of final stage
+      mass 500 kg                      # Mass of final stage
+   end_target_data
+end_ballistic_missile_launch_computer
+
+###############################################################################
+
+weapon RED_MRBM_1 WSF_EXPLICIT_WEAPON
+
+   # The location offset puts the weapon center at half the length - 1 m.
+   # This assumes the scenario creator puts the launching platform at 1 m agl.
+
+   location 0.0 0.0 -5.15 m                      # Ref 1, length = 12.3 m
+
+   launched_platform_type RED_MRBM_1
+
+   launch_computer RED_MRBM_1_LAUNCH_COMPUTER
+   end_launch_computer
+
+   # The missiles are launched vertically.
+   # We can't specify 90 degrees because of a singularity
+   tilt  89.9 degrees
+
+   # This causes a call to the launch computer to compute the predicted intercept.
+   # The launcher will then be cued to the proper angles (Subject to the slewing
+   # limits defined below). This is a bit of a hack until the guidance computer
+   # is changed...
+
+   cue_to_predicted_intercept true
+   slew_mode azimuth
+   azimuth_slew_limits -180 deg 180 deg
+
+   # Default to a single weapon on the vehicle
+   quantity 1
+
+   # Abort the launch if the launch computer didn't provide the required data
+   require_loft_angle
+
+end_weapon

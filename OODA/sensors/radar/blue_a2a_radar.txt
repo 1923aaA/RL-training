@@ -1,0 +1,189 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#
+#  File:  blue_a2a_radar.txt
+#
+#                    ***** NOTICE *****
+#
+#  This definition is not intended to be representive of the real system.
+#  Some undefined characteristics of the system have been provided so the
+#  achieved performance matches the values defined in the noted references.
+#
+#  Reference:  unknown
+#
+#  June 08:  added to file repository
+#
+#                      UNCLASSIFIED
+###############################################################################
+#
+#  Includes:
+#    antenna_pattern : receive/transmit pattern
+#    sensor :
+#      slew_mode
+#      mode_template: basic  sensor  specification
+#        transmitter : uses predefined  antenna pattern , power, & frequency
+#        receiver : not specified
+#        range_product (equivalent on_m2_detect_range is provided)
+#        report info
+#      mode details for 120X10, 40X20, 20X15_BALL, & 20X15
+#        these use the  data  in the mode template and provide a place to
+#        edit various parameters such as:
+#          range_product, azimuth_field_of_view & elevation_field_of_view
+#      alpha/beta  filter
+#
+#    Minimum Additional  data  needed in user's file
+#      Specify the location and orientation of the  sensor  on the  platform .
+#        (e.g., location    0.0 0.0 -30 m)
+#      Specify pitch of plane for antenna rotation (default = 0)
+#        (e.g., pitch      0 deg)
+#
+###############################################################################
+#
+#  SNIPPET: example of how this sensor could be included in a simulation
+#
+#---*---*---
+#  Define a platform that contains the sensor
+#  BLUE_MULTIROLE_FIGHTER_1_BASELINE contains mover, signatures, dimensions, etc.
+#---*---*---
+// include_once blue_a2a_radar.txt
+//
+// ... simulation setup & initialization commands
+//
+// platform sensor_platform BLUE_MULTIROLE_FIGHTER_1_BASELINE
+//   heading 180.0 deg
+//   side red
+//   start_time 0.0000000000 sec
+//   // subsonic cruise at far less than max ceiling
+//   route
+//     position 06:56:24n 117:11:16e altitude 6000 m msl
+//       speed 600 knots
+//     position 08:21:12n 117:11:16e altitude 6000 m msl
+//       speed 600 knots
+//   end_route
+//
+//   add sensor gen_radar BLUE_A2A_RADAR
+//     on
+//     debug
+//   end_sensor
+// end_platform
+#---*---*---
+# Define a target
+#---*---*---
+// platform_type UAV_TYPE WSF_PLATFORM
+//   icon predator    # or: Global_Hawk, predator, ucav, UCAV_Navy
+//   side blue
+//   category catUAV
+//
+//   radar_signature   ONE_M_SQUARED_RADAR_SIGNATURE
+//   optical_signature ONE_M_SQUARED_OPTICAL_SIGNATURE
+//
+//   mover WSF_AIR_MOVER
+//     roll_rate_limit          1 rad/sec
+//     default_linear_acceleration  1.0 g
+//     default_radial_acceleration  6.5 g
+//     default_climb_rate        17.3 fps
+//     maximum_speed            130.0 knots
+//     maximum_altitude          15000 ft
+//     minimum_altitude          50 ft
+//     maximum_linear_acceleration  8 g
+//   end_mover
+//
+// end_platform_type
+#
+###############################################################################
+
+#-- Basic Antenna pattern
+antenna_pattern BLUE_A2A_RADAR_ANTENNA_PATTERN
+  inline_table db
+    #-- The 1st is the number of azimuths and the 2nd is the number of elevations
+    4  2
+              -1.0  1.0
+         -5.0    5.0  5.0
+         -1.5   35.0  35.0
+          1.5   35.0  35.0
+          5.0    5.0  5.0
+  end_inline_table
+end_antenna_pattern
+
+#-- BLUE_MULTIROLE_FIGHTER_1  Sensor  specification
+sensor BLUE_A2A_RADAR WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                                   # default
+  no_debug                              # default
+
+  #-- Articulated Part Commands
+  #   Slew mode and limits, yaw, pitch, & roll info goes here
+  slew_mode                 azimuth
+
+  #-- Sensor Level Commands
+  show_calibration_data                 # display radar characteristics
+
+  #-- Detection Scheduling Commands
+  # none at this time
+
+  mode_template
+
+    #-- Beam Commands
+    transmitter
+      frequency             9.6 ghz
+      power                 2.0 MW
+      antenna_pattern       BLUE_A2A_RADAR_ANTENNA_PATTERN
+    end_transmitter
+
+    receiver
+    end_receiver
+
+    range_product           201.8 dBsm    # ~59.9 nm
+    // one_m2_detect_range     59.9 nm
+
+    #-- Detection Scheduling Commands
+    //frame_time              0.1 sec
+    frame_time              0.5 sec
+
+    #-- Track Formation Commands
+    reports_location
+    reports_velocity
+  end_mode_template
+
+  mode 120X10
+    azimuth_field_of_view     -60.0 deg  60.0 deg
+    elevation_field_of_view   -5.0 deg   5.0 deg
+    range_product             194.4 dBsm            # ~39.1 nm
+    // one_m2_detect_range    39.1 nm
+    transmitter
+      power                   2.3 MW
+    end_transmitter
+  end_mode
+
+  mode 40X20
+    azimuth_field_of_view   -20.0 deg  20.0 deg
+    elevation_field_of_view -10.0 deg  10.0 deg
+    range_product           198.7 dBsm              # ~50.1 nm
+    //one_m2_detect_range     50.1 nm
+  end_mode
+
+  mode 20X15_BALL
+    azimuth_field_of_view   -10.0 deg  10.0 deg
+    elevation_field_of_view -7.5 deg   7.5 deg
+  end_mode
+
+  mode 20X15
+    azimuth_field_of_view   -10.0 deg  10.0 deg
+    elevation_field_of_view -7.5 deg   7.5 deg
+  end_mode
+
+  #-- Track Filter Commands
+  filter  WSF_ALPHA_BETA_FILTER
+    alpha   0.4
+    beta    0.1
+  end_filter
+
+end_sensor

@@ -1,0 +1,152 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+###############################################################################
+#
+#    File: blue_ship_mf_radar
+#
+#  Utilizes computer-controlled blue ship medium frequency (blue_ship_mf_radar) Phased Array Radar
+#  It uses a passive electronically scanned array.
+#  Radar introduced by US in 1973.
+#  Frequency:  S band
+#  Range:    100+ nm
+#  Power:    4 MW (peak)
+#
+#                    ***** NOTICE *****
+#
+#  This definition is not intended to be representative of the real system.
+#  Some undefined characteristics of the system have been provided so the
+#  achieved performance matches the values defined in the noted references.
+#
+#  Reference:
+#   Version 2 matched data from
+#     "International Demo Phase B Master Scenario Checklist"
+#     http://www.fas.org/man/dod-101/sys/ship/weaps/an-spy-1.htm
+#     http://en.wikipedia.org/wiki/AN/SPY-1
+#
+#  June 08:  added to wiki
+#
+#                      UNCLASSIFIED
+###############################################################################
+#
+#  SNIPPET: example of how this sensor could be included in a simulation
+#
+// include_once blue_ship_mf_radar.txt
+//
+// ... simulation setup & initialization commands
+//
+//  platform_type UAV_TYPE WSF_PLATFORM
+//    icon      predator    // or: Global_Hawk, predator, ucav, UCAV_Navy
+//    side      blue
+//
+//    radar_SIGNATUREature   ONE_M_SQUARED_RADAR_SIG
+//    optical_SIGNATUREature ONE_M_SQUARED_OPTICAL_SIG
+//
+//    mover WSF_AIR_MOVER
+//      roll_rate_limit               1 rad/sec
+//      default_linear_acceleration   1.0 g
+//      default_radial_acceleration   6.5 g
+//      default_climb_rate            17.3 fps
+//      maximum_speed                 130.0 knots
+//      maximum_altitude              15000 ft
+//      minimum_altitude              50 ft
+//      maximum_linear_acceleration   8 g
+//    end_mover
+//  end_platform_type
+//
+//  platform sensor_platform WSF_PLATFORM
+//    side      red
+//    icon      Sovremennyy         // good 3D option for large boats
+//    heading   0.0 deg
+//
+//    mover WSF_SURFACE_MOVER
+//      maximum_speed     30.0 kts
+//      at_end_of_path    extrapolate
+//    end_mover
+//
+//    route
+//      position 07:06:00n 117:11:16e altitude 300 m msl
+//        speed 200 knots
+//      position 08:21:12n 117:11:16e altitude 300 m msl
+//        speed 200 knots
+//    end_route
+//
+//    add sensor blue_ship_mf_radar BLUE_SHIP_MF_RADAR
+//      on
+//      debug
+//      location 0 0 -40 ft
+//      ignore catSatellite      // ignore all satellites
+//    end_sensor
+//  end_platform
+#
+#############################################################################
+
+antenna_pattern BLUE_SHIP_MF_RADAR_ANTENNA_PATTERN
+  circular_pattern
+    peak_gain         30 dB     // need to qualify based on Loop Gain
+    beamwidth         2.1 deg
+  end_circular_pattern
+//  rectangular_pattern
+//    peak_gain            35 dB
+//    azimuth_beamwidth    1.6 deg
+//    elevation_beamwidth  2.1 deg
+#  end_rectangular_pattern
+end_antenna_pattern
+
+sensor BLUE_SHIP_MF_RADAR WSF_RADAR_SENSOR
+
+  #-- Platform Part Commands
+  off                         // default
+  no_debug                    // default
+
+  #-- Articulated Part Commands
+  #   Slew mode and limits, yaw, pitch, & roll info goes here
+  scan_mode                   azimuth_and_elevation
+  antenna_tilt                15 deg
+  azimuth_scan_limits         -60.0 deg 60.0 deg
+  elevation_scan_limits       -45.0 deg 45.0 deg
+  # Field of view is used to cull targets, usually set larger than scan limits
+  #   -5  deg detects ships more than 457.19 ft (139.35 m) away
+  #   -10 deg detects ships more than 226.85 ft (69.14 m) away
+  azimuth_field_of_view       -60.0 deg 60.0 deg
+  // elevation_field_of_view    5.0 deg 65.0 deg    // okay for aircraft
+  elevation_field_of_view     -5.0 deg 65.0 deg   // detects surface ships
+
+  #-- Sensor Level Commands
+  show_calibration_data                     // display radar characteristics
+
+  #-- Detection Scheduling Commands
+  frame_time                  4.0 sec
+
+  #-- Beam Commands
+  one_m2_detect_range 800 nm
+
+  signal_processor simple_doppler
+     //minimum_doppler_speed       35.0 kts
+     minimum_doppler_speed       25.0 kts      // slightly less than patrol boat
+  end_signal_processor
+
+  transmitter
+    frequency         3287 mhz
+    power             0.1 MW                // GUESS: could not find in available data
+    antenna_pattern   BLUE_SHIP_MF_RADAR_ANTENNA_PATTERN
+  end_transmitter
+
+  receiver
+    bandwidth         1.666 mhz
+    antenna_pattern   BLUE_SHIP_MF_RADAR_ANTENNA_PATTERN
+  end_receiver
+
+  #-- Track Formation Commands
+  reports_bearing
+  reports_elevation
+  reports_frequency
+  reports_location
+  reports_velocity
+
+end_sensor

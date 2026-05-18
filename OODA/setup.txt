@@ -1,0 +1,52 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+# New file created by AFSIM Wizard
+file_path .
+include_once event_output.txt
+include_once event_pipe.txt
+include_once platforms/common.txt
+
+include_once platforms/target.txt
+include_once platforms/ucav.txt
+include_once platforms/ship_1.txt
+// red commander
+include_once platforms/ship.txt
+// red SOJ
+#include_once platforms/soj.txt
+// blue commander
+include_once platforms/flight_lead.txt
+include_once platforms/gci_cmdr.txt
+include_once platforms/soc_cmdr.txt
+// air platform (used by blue and red)
+include_once platforms/striker.txt
+include_once platforms/bomber.txt
+
+include_once platforms/common.txt
+include_once platforms/red_missile_destroyer.txt
+include_once platforms/red_missile_frigate.txt
+include_once platforms/missile_ship.txt
+include_once platforms/red_naval_helicopter.txt
+include_once platforms/red_mrbm_1_launcher.txt
+include_once platforms/car.txt
+
+script_variables
+   Array<WsfGeoPoint> gAvoidPoints = Array<WsfGeoPoint>();
+   Array<double>      gAvoidRadii  = Array<double>();
+   
+   // avoid the zone:   100_brigade_sector  
+   gAvoidPoints[0] = WsfGeoPoint.Construct( "30:22n 81:45w");   // lat lon string
+   gAvoidRadii[0]  = 1852*30.0; //30.0 nm
+end_script_variables
+
+include_once event_output.txt
+
+include_once observers.txt
+
+

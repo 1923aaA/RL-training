@@ -1,0 +1,121 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+log version $Id: red_missile_frigate.txt,v 1.1.1.1 2008/07/28 15:09:03 m210650 Exp $
+
+###############################################################################
+#
+#                               UNCLASSIFIED
+#
+#                          Guided-Missile Frigate
+#
+#   Sources:
+#
+#     1.  www.sinodefence.com
+#     2.  Jane's
+#
+###############################################################################
+
+include_once platforms/naval_sam_tactics.txt
+
+include_once sensors/radar/top_plate.txt
+include_once sensors/radar/front_dome.txt
+include_once weapons/sam/red_sr_sam_2.txt
+
+processor RED_MISSILE_FRIGATE_DATA_MGR WSF_TRACK_PROCESSOR
+   purge_interval            60 sec
+end_processor
+
+processor RED_MISSILE_FRIGATE_TASK_MGR NAVAL_SAM_TACTICS
+   on_initialize
+      USE_ILLUMINATOR   = true;
+      ILLUMINATOR_TYPE  = "FRONT_DOME";
+      ILLUMINATOR_MODE  = "default";
+      WEAPON_NAME       = "sam";
+      ENVELOPE          = "half_kinematic";
+   end_on_initialize
+end_processor
+
+platform_type RED_MISSILE_FRIGATE WSF_PLATFORM
+  icon JiangKai
+
+  radar_signature SHIP_RADAR_SIGNATURE
+
+  comm datalink RED_DATALINK
+     network_name <local:master>
+     internal_link task_mgr
+  end_comm
+
+  comm RED_SR_SAM_2_uplink WSF_COMM_TRANSCEIVER
+  end_comm
+
+  processor data_mgr RED_MISSILE_FRIGATE_DATA_MGR
+    report_to commander via datalink
+  end_processor
+
+  processor task_mgr RED_MISSILE_FRIGATE_TASK_MGR
+     operating_level ENGAGE 1
+#     weapon_uplink_path top_plate RED_SR_SAM_2_uplink
+  end_processor
+
+  track_manager
+     filter FILTER_TACTICS end_filter
+  end_track_manager
+
+  mover WSF_SURFACE_MOVER
+    maximum_speed  27 kts
+  end_mover
+
+  sensor top_plate TOP_PLATE # air search
+    on
+    ignore_same_side
+    internal_link data_mgr
+  end_sensor
+
+  sensor ill-1 FRONT_DOME # RED_SR_SAM_2 illuminator
+    category ILLUMINATOR
+    off
+    ignore_same_side
+  end_sensor
+
+  sensor ill-2 FRONT_DOME # RED_SR_SAM_2 illuminator
+    category ILLUMINATOR
+    off
+    ignore_same_side
+  end_sensor
+
+  sensor ill-3 FRONT_DOME # RED_SR_SAM_2 illuminator
+    category ILLUMINATOR
+    off
+    ignore_same_side
+  end_sensor
+
+  sensor ill-4 FRONT_DOME # RED_SR_SAM_2 illuminator
+    category ILLUMINATOR
+    off
+    ignore_same_side
+  end_sensor
+
+  weapon sam RED_SR_SAM_2
+    location 0 0 -5 m  # estimate
+    quantity      32
+  end_weapon
+
+  zone full_kinematic
+     circular
+        maximum_altitude 22 km
+        maximum_radius   40 km
+  end_zone
+
+  zone half_kinematic
+     circular
+        maximum_altitude 22 km
+        maximum_radius   20 km
+  end_zone
+
+end_platform_type

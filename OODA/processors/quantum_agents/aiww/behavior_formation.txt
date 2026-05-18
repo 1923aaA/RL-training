@@ -1,0 +1,173 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+
+
+
+
+
+behavior formation
+
+   script_debug_writes off
+
+   script_variables
+
+      //**********************************************************************//
+      //** debugging parameters                                             **//
+      //**********************************************************************//
+      bool  mDrawFormationData =  false;
+
+      //**********************************************************************//
+      //** formation flying parameters, for offset and tightness            **//
+      //**********************************************************************//
+      Array<string> mLeadNames = Array<string>();
+      double   mFormationPositionX =  -500;     #meters in front of of package
+      double   mFormationPositionY =  3000;  #meters off right wing of package
+      double   mGoodFormationRatio =  0.15;  #percentage of total offset
+      double   mFormationLookAhead = 30.0;   #seconds
+      double   mFormationAltitude  = -1.0;   #used if positive
+
+      //**********************************************************************//
+      //********* VARIABLES BELOW THIS LINE ARE NOT FOR USER EDITING *********//
+      //**********************************************************************//
+      WsfDraw  mDraw           =  WsfDraw();
+      bool     mLastInPosition =  false;  #boolean flag, utility, don't change
+
+   end_script_variables
+
+
+   ### find escorted platform, return it
+   script WsfPlatform GetFormationLead()
+      WsfPlatform leadPlatform;
+      foreach ( string sLeadName in mLeadNames )
+      {
+         leadPlatform = WsfSimulation.FindPlatform(sLeadName);
+         if (leadPlatform.IsValid() )
+         {
+            break;
+         }
+      }
+      return leadPlatform;
+   end_script
+
+
+   precondition
+      writeln_d("precondition formation");
+
+      WsfPlatform leadPlatform = GetFormationLead();
+      if (!leadPlatform.IsValid() )
+      {
+         return Failure("no listed lead for formation found!");
+      }
+
+      writeln_d("--- agent ", PLATFORM.Name(), " is in formation with ", leadPlatform.Name());
+      return true;
+   end_precondition
+
+
+
+   script bool AmInFormationPosition(WsfGeoPoint formationPoint, double radius)
+      //make it fly to the inner 50% of the acceptable radius on re-entry
+      if (!mLastInPosition)
+      {
+         radius = 0.5 * radius;
+      }
+      mLastInPosition = false;
+      double range = PLATFORM.GroundRangeTo(formationPoint);
+      if (range <= radius)
+      {
+         mLastInPosition = true;
+      }
+      return mLastInPosition;
+   end_script
+
+
+
+   execute
+      writeln_d("executing formation.");
+
+      //make sure escorted platform exists, find it, save it
+      WsfPlatform leadPlatform = GetFormationLead();
+      if (!leadPlatform.IsValid() )
+      {
+         writeln_d("--- fighter ", PLATFORM.Name(), " no valid platform to escort!");
+         return;
+      }
+
+      //check if I am approximately in my formation position
+      WsfGeoPoint formationPoint = leadPlatform.Location();
+
+      if (mFormationAltitude > 0)
+      {
+        formationPoint.Set(formationPoint.Latitude(), formationPoint.Longitude(), mFormationAltitude);
+      }
+
+      if (mFormationPositionX > 0)
+      {
+         formationPoint.Extrapolate(leadPlatform.Heading(), mFormationPositionX);
+      }
+      else
+      {
+         formationPoint.Extrapolate(leadPlatform.Heading()+180, -mFormationPositionX);
+      }
+
+      if (mFormationPositionY > 0)
+      {
+         formationPoint.Extrapolate(leadPlatform.Heading()+90.0, mFormationPositionY);
+      }
+      else
+      {
+         formationPoint.Extrapolate(leadPlatform.Heading()-90.0, -mFormationPositionY);
+      }
+
+      if (!formationPoint.IsValid())
+      {
+         writeln_d("--- fighter ", PLATFORM.Name(), " invalid formation point from ", leadPlatform.Name());
+         return;
+      }
+
+      if (mDrawFormationData == true)
+      {
+         mDraw.SetLayer("behavior_formation");
+         mDraw.SetDuration(PROCESSOR.UpdateInterval());
+
+         // draw line to desired formation position
+         mDraw.SetColor(0, 1, 0);   //green
+         mDraw.SetLineSize(4);
+         mDraw.BeginLines();
+            mDraw.Vertex(leadPlatform.Location());
+            mDraw.Vertex(formationPoint);
+         mDraw.End();
+      }
+
+      double radius = mGoodFormationRatio * leadPlatform.SlantRangeTo(formationPoint);
+
+      double formAlt   = leadPlatform.Altitude();
+      double formSpeed = leadPlatform.Speed();
+      double formYaw   = leadPlatform.Heading();
+      if (formAlt < PLATFORM.Altitude())
+      {
+         formAlt = PLATFORM.Altitude();
+      }
+      WsfGeoPoint tgt = WsfGeoPoint.Construct(formationPoint.Latitude(), formationPoint.Longitude(), formAlt);
+      double lookAheadDistance  = mFormationLookAhead * leadPlatform.Speed();
+      tgt.Extrapolate(formYaw, lookAheadDistance);
+
+      if (! AmInFormationPosition(formationPoint, radius))
+      {
+         //fly towards formation position, extrapolated ahead X seconds, in order to catch up to the point in X seconds
+         formSpeed = PLATFORM.GroundRangeTo(tgt) / mFormationLookAhead;
+      }
+
+     #extern bool FlyTarget (WsfPlatform, WsfGeoPoint,    double);
+      FlyTarget (PLATFORM, tgt, formSpeed);
+
+   end_execute
+
+end_behavior
+

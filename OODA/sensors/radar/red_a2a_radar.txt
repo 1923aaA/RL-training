@@ -1,0 +1,156 @@
+# ****************************************************************************
+# CUI
+#
+# The Advanced Framework for Simulation, Integration, and Modeling (AFSIM)
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ****************************************************************************
+#//fighter-based radar
+#
+#sensor RED_A2A_RADAR {
+#    base_type RADAR
+#    fov_limits (-65.0 deg 65.0 deg -60.0 deg 60.0 deg)
+#    mode_slew             last_set
+#    azimuth       0.0  deg  //default azimuth when mode_slew = last_set
+#    elevation     0.0 deg   //default elevation when mode_slew = last_set
+#    mode (
+#          ( name          "60X10"
+#            scan_type     scanning   //used in jammer logic
+#            azimuth_fov   60.0 deg
+#            elevation_fov 10.0 deg
+#      esm_id_tag   "SB4"
+#      tag_priority     9
+#      id_level   5
+#      id_range_signature  35
+#             pattern      ( 0      deg  35.0
+#                           1.5    deg   5.0
+#                           5.0    deg   0.0
+#                           355.0  deg   5.0
+#                           358.5  deg  35.0)
+#            azimuth       0.0  deg   //initial slew in this mode
+#            elevation     0.0  deg   //initial slew in this mode
+#            beamwidth     3.0  deg   //used in jammer logic
+#            number_cancel 0          //used in jammer logic
+#            db_cancel     20.0       //used in jammer logic
+#            kj            0.0 (
+#                               X_JAMMER_RED 140.9
+#                               )
+#            prf           highmed    9.0
+#            frequency     9.2
+#            polarization  V
+#            update_filter on
+#            frame_time    4.0
+#            doppler_notch 60.0 knots
+#            range_product 194.7              //40nm vs 0-dB
+#      fan_range      40.0 nm
+#            //id_range_signature 0.0 (
+#            //                        (F18 (50.0 0.0 0.0))
+#            //                       )
+#           )
+#          ( name          "40X20"
+#            scan_type     scanning   //used in jammer logic
+#            azimuth_fov   40.0 deg
+#            elevation_fov 20.0 deg
+#      esm_id_tag   "SB2"
+#      tag_priority     9
+#            pattern      ( 0      deg  35.0
+#                           1.5    deg   5.0
+#                           5.0    deg   0.0
+#                           355.0  deg   5.0
+#                           358.5  deg  35.0)
+#            azimuth       0.0  deg   //initial slew in this mode
+#            elevation     0.0  deg   //initial slew in this mode
+#            beamwidth     3.0  deg   //used in jammer logic
+#            number_cancel 0          //used in jammer logic
+#            db_cancel     20.0       //used in jammer logic
+#            kj            0.0 (
+#                               X_JAMMER_RED    140.9
+#                              )
+#            prf           highmed    9.0
+#            frequency     9.2
+#            polarization  V
+#            update_filter on
+#            frame_time    2.0
+#            doppler_notch 60.0 knots
+#            range_product 198.7              //50nm vs 0-dB
+#            fan_range      50.0 nm
+#            id_range_signature 0.0 (
+#                                    (F18 (50.0 0.0 0.0))
+#                                   )
+#          )
+#          ( name          "20X15"
+#            scan_type     scanning   //used in jammer logic
+#            azimuth_fov   20.0 deg
+#            elevation_fov 15.0 deg
+#      esm_id_tag   "SB1"
+#      tag_priority     9
+#            pattern      ( 0      deg  35.0
+#                           1.5    deg   5.0
+#                           5.0    deg   0.0
+#                           355.0  deg   5.0
+#                           358.5  deg  35.0)
+#            azimuth       0.0  deg   //initial slew in this mode
+#            elevation     0.0  deg   //initial slew in this mode
+#            beamwidth     3.0  deg   //used in jammer logic
+#            number_cancel 0          //used in jammer logic
+#            db_cancel     20.0       //used in jammer logic
+#            kj            0.0 (
+#                               X_JAMMER_RED 140.9
+#                               )
+#            prf           highmed    9.0
+#            frequency     9.2
+#            polarization  V
+#            update_filter on
+#            frame_time    1.0
+#            doppler_notch 60.0 knots
+#            range_product 198.7              //50nm vs 0-dB
+#            fan_range      50.0 nm
+#            id_range_signature 0.0 (
+#                                    (F18 (50.0 0.0 0.0))
+#                                   )
+#          )
+#         )
+#    range 50.0 nm
+#    ERP  1.0 MW
+#    initial_state off
+#}
+#
+
+sensor RED_A2A_RADAR WSF_RADAR_SENSOR
+
+   mode_template
+      reports_location
+      reports_velocity
+
+      transmitter
+         frequency 9.6 ghz
+         power 1.0 mw
+      end_transmitter
+      receiver
+      end_receiver
+      one_m2_detect_range 50 nm
+      frame_time 2 sec
+      track_quality 1.0
+   end_mode_template
+
+   mode 60X10
+      azimuth_field_of_view    -30.0 deg   30.0 deg
+      elevation_field_of_view   -5.0 deg    5.0 deg
+      one_m2_detect_range 40 nm
+   end_mode
+   mode 40X20
+      azimuth_field_of_view    -20.0 deg   20.0 deg
+      elevation_field_of_view  -10.0 deg   10.0 deg
+   end_mode
+   mode 20X15
+      azimuth_field_of_view    -10.0 deg   10.0 deg
+      elevation_field_of_view   -7.5 deg    7.5 deg
+   end_mode
+
+   filter WSF_ALPHA_BETA_FILTER
+      alpha 0.4
+      beta  0.1
+   end_filter
+
+end_sensor

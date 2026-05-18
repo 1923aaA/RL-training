@@ -1,0 +1,12 @@
+{
+    "latest_snapshot": {
+        "connections": {},
+        "performance": {},
+        "timestamp": "2026-04-07T17:46:51.915143"
+    },
+    "metadata": {
+        "description": "网络性能监控数据",
+        "stats_interval": 5,
+        "test_start_time": "2026-04-07T17:46:51.915143"
+    }
+}

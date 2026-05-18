@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据格式测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2C58A6;
+            border-bottom: 3px solid #2C58A6;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #2C58A6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1d3a6f;
+        }
+        #log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 数据格式优化 - 测试页面</h1>
+        
+        <div class="test-section">
+            <h2>测试步骤</h2>
+            <ol>
+                <li>点击"加载JSON文件"按钮检查数据格式</li>
+                <li>观察控制台日志(F12)</li>
+                <li>验证数据结构是否正确</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>控制按钮</h2>
+            <button onclick="testLoadJSON()">加载 JSON 文件</button>
+            <button onclick="testNewFormat()">测试新格式</button>
+            <button onclick="testOldFormat()">测试旧格式兼容</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+
+        <div class="test-section">
+            <h2>测试结果</h2>
+            <div id="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>实时日志</h2>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#0ff';
+            logDiv.innerHTML += `<div style="color:${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('result').innerHTML = '';
+        }
+
+        async function testLoadJSON() {
+            log('开始加载 network_performance.json...', 'info');
+            try {
+                const response = await fetch('network_performance.json?t=' + Date.now());
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                const data = await response.json();
+                
+                // 检查数据格式
+                let formatInfo = '';
+                if (data.latest_snapshot) {
+                    formatInfo = '<div class="status success">✅ 检测到新格式: latest_snapshot</div>';
+                    log('✓ 新格式检测成功', 'success');
+                    
+                    // 显示详细信息
+                    formatInfo += '<pre>' + JSON.stringify({
+                        timestamp: data.latest_snapshot.timestamp,
+                        connections_count: Object.keys(data.latest_snapshot.connections || {}).length,
+                        performance: data.latest_snapshot.performance
+                    }, null, 2) + '</pre>';
+                    
+                } else if (data.performance_snapshots) {
+                    formatInfo = '<div class="status info">ℹ️ 检测到旧格式: performance_snapshots (兼容模式)</div>';
+                    log('ℹ 旧格式检测,兼容模式', 'info');
+                    formatInfo += '<p>快照数量: ' + data.performance_snapshots.length + '</p>';
+                } else {
+                    formatInfo = '<div class="status error">❌ 未知数据格式</div>';
+                    log('✗ 数据格式错误', 'error');
+                }
+                
+                document.getElementById('result').innerHTML = formatInfo;
+                
+            } catch (error) {
+                log('✗ 加载失败: ' + error.message, 'error');
+                document.getElementById('result').innerHTML = 
+                    '<div class="status error">❌ 加载失败: ' + error.message + '</div>';
+            }
+        }
+
+        function testNewFormat() {
+            log('测试新格式数据处理...', 'info');
+            
+            const mockData = {
+                metadata: { test_start_time: '2026-04-03T15:00:00' },
+                latest_snapshot: {
+                    timestamp: new Date().toISOString(),
+                    connections: { 'node1->node2': {} },
+                    performance: {
+                        avg_throughput_mbps: 25.5,
+                        avg_latency_ms: 0.035,
+                        avg_packet_delivery_rate: 99.8,
+                        avg_jitter_ms: 0.015
+                    }
+                }
+            };
+            
+            // 模拟前端处理逻辑
+            let latestSnapshot;
+            if (mockData.latest_snapshot) {
+                latestSnapshot = mockData.latest_snapshot;
+                log('✓ 成功提取 latest_snapshot', 'success');
+            }
+            
+            if (latestSnapshot && latestSnapshot.performance) {
+                log('✓ 性能数据可用', 'success');
+                document.getElementById('result').innerHTML = 
+                    '<div class="status success">✅ 新格式测试通过</div>' +
+                    '<pre>' + JSON.stringify(latestSnapshot.performance, null, 2) + '</pre>';
+            }
+        }
+
+        function testOldFormat() {
+            log('测试旧格式兼容性...', 'info');
+            
+            const mockData = {
+                metadata: { test_start_time: '2026-04-03T15:00:00' },
+                performance_snapshots: [
+                    { timestamp: '2026-04-03T15:00:00', performance: {} },
+                    { timestamp: '2026-04-03T15:00:05', performance: {} },
+                    { timestamp: '2026-04-03T15:00:10', performance: { avg_throughput_mbps: 24.2 } }
+                ]
+            };
+            
+            // 模拟兼容性处理
+            let latestSnapshot;
+            if (mockData.latest_snapshot) {
+                latestSnapshot = mockData.latest_snapshot;
+            } else if (mockData.performance_snapshots && Array.isArray(mockData.performance_snapshots)) {
+                latestSnapshot = mockData.performance_snapshots[mockData.performance_snapshots.length - 1];
+                log('✓ 兼容模式: 提取最后一个快照', 'success');
+            }
+            
+            if (latestSnapshot) {
+                log('✓ 旧格式兼容测试通过', 'success');
+                document.getElementById('result').innerHTML = 
+                    '<div class="status success">✅ 旧格式兼容测试通过</div>' +
+                    '<p>提取的快照: ' + latestSnapshot.timestamp + '</p>' +
+                    '<pre>' + JSON.stringify(latestSnapshot.performance, null, 2) + '</pre>';
+            }
+        }
+
+        // 页面加载时自动测试
+        window.onload = function() {
+            log('测试页面已加载', 'info');
+            log('点击按钮开始测试...', 'info');
+        };
+    </script>
+</body>
+</html>
